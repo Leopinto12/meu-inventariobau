@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTÁRIO VISÃO - OFICIAL</title>
+    <title>INVENTÁRIO VISÃO - FINAL</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
@@ -23,20 +23,21 @@
             .hide-mobile { display: none; }
         }
         .sidebar-btn.active { background-color: #eff6ff; color: #2563eb; border-radius: 15px; }
+        .done-text { text-decoration: line-through; opacity: 0.5; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
     <div id="login-page" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 px-6">
-        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm text-center border border-slate-100">
+        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
             <div class="mb-6">
-                <div class="w-20 h-20 bg-blue-600 rounded-[25px] flex items-center justify-center mx-auto mb-4 font-black text-white text-3xl shadow-xl shadow-blue-500/30">IV</div>
+                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-black text-white text-2xl shadow-xl">IV</div>
                 <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Inventário Visão</h2>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
                 <input type="text" id="user" placeholder="Usuário" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
                 <input type="password" id="pass" placeholder="Senha" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase">Acessar</button>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">ENTRAR</button>
             </form>
         </div>
     </div>
@@ -53,22 +54,25 @@
         </aside>
 
         <main class="flex-1 p-5 md:p-10 overflow-y-auto">
+            
             <section id="tab-arquivos" class="tab-content active">
                 <div class="flex flex-col gap-4 mb-8">
                     <h2 class="text-3xl font-black uppercase italic tracking-tighter">Cofre Cloud</h2>
                     <div class="flex gap-2">
-                        <input type="date" id="filter-date-files" onchange="renderFiles()" class="bg-white shadow-sm p-4 rounded-2xl flex-1 outline-none font-bold">
-                        <button onclick="document.getElementById('fileUpload').click()" id="btnUpload" class="bg-blue-600 text-white px-6 py-4 rounded-2xl font-black shadow-lg">+ SUBIR</button>
+                        <input type="date" id="filter-date-files" onchange="renderFiles()" class="bg-white shadow-sm p-4 rounded-2xl flex-1 outline-none font-bold border border-slate-100">
+                        <button onclick="document.getElementById('fileUpload').click()" id="btnUpload" class="bg-blue-600 text-white px-6 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all">+ SUBIR</button>
                         <input type="file" id="fileUpload" class="hidden" onchange="uploadToFirebase(event)">
                     </div>
                 </div>
-                <div id="progressContainer" class="hidden w-full bg-gray-200 rounded-full h-2 mb-6"><div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div></div>
+                <div id="progressContainer" class="hidden w-full bg-gray-200 rounded-full h-2 mb-6">
+                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                </div>
                 <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </section>
 
             <section id="tab-cronograma" class="tab-content">
                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Hoje</h2>
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Checklist</h2>
                     <button onclick="addSchedule()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg">+ NOVO</button>
                 </div>
                 <div id="schedule-list" class="space-y-4 mb-8"></div>
@@ -77,17 +81,15 @@
 
             <section id="tab-notas" class="tab-content">
                 <div class="flex flex-col gap-4 mb-8">
-                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Notas Nuvem</h2>
-                    <div class="flex gap-2">
-                        <input type="text" id="search-note" oninput="renderNotes()" placeholder="Buscar nota..." class="bg-white shadow-sm p-4 rounded-2xl flex-1 outline-none font-medium">
-                    </div>
-                    <button onclick="addNote()" class="bg-slate-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg">+ Criar Nova Nota</button>
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Anotações</h2>
+                    <input type="text" id="search-note" oninput="renderNotes()" placeholder="Buscar..." class="bg-white shadow-sm p-4 rounded-2xl flex-1 outline-none font-medium border border-slate-100">
+                    <button onclick="addNote()" class="bg-slate-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg">+ Criar Nota</button>
                 </div>
                 <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </section>
 
             <section id="tab-desempenho" class="tab-content">
-                <h2 class="text-3xl font-black uppercase italic tracking-tighter mb-8 text-slate-800">Relatório</h2>
+                <h2 class="text-3xl font-black uppercase italic tracking-tighter mb-8">Relatório</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
                     <div class="bg-white p-6 rounded-[35px] shadow-sm border border-slate-100">
                         <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Dias Salvos</p>
@@ -114,6 +116,7 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO OFICIAL
         const firebaseConfig = {
             apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
             authDomain: "inventario-visao.firebaseapp.com",
@@ -125,7 +128,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const storage = firebase.storage();
-        const dbCloud = firebase.firestore(); // BANCO DE DADOS EM NUVEM
+        const dbCloud = firebase.firestore();
 
         let localDB = { files: [], tasks: [], notes: [], history: [] };
 
@@ -134,58 +137,76 @@
             if(document.getElementById('user').value === "Leoinventario" && document.getElementById('pass').value === "lnventario2026") {
                 document.getElementById('login-page').classList.add('hidden');
                 document.getElementById('app-page').classList.remove('hidden');
-                syncWithCloud(); // Busca dados na nuvem ao entrar
+                syncWithCloud();
             } else { alert("Senha incorreta!"); }
         }
 
         function showTab(id, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600', 'bg-blue-50'));
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600'));
             btn.classList.add('active');
             renderAll();
         }
 
-        // --- SINCRONIZAÇÃO COM NUVEM ---
+        // SINCRONIZAÇÃO EM NUVEM
         function syncWithCloud() {
-            // Sincroniza Notas em tempo real
             dbCloud.collection("notas").orderBy("createdAt", "desc").onSnapshot(snap => {
                 localDB.notes = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderNotes();
             });
-            // Sincroniza Arquivos
             dbCloud.collection("arquivos").orderBy("createdAt", "desc").onSnapshot(snap => {
                 localDB.files = snap.docs.map(doc => doc.data());
                 renderFiles();
             });
-            // Sincroniza Histórico
-            dbCloud.collection("historico").orderBy("createdAt", "desc").onSnapshot(snap => {
-                localDB.history = snap.docs.map(doc => doc.data());
-                renderHistory();
-            });
-            // Tarefas do dia (Checklist)
             dbCloud.collection("tarefas_hoje").onSnapshot(snap => {
                 localDB.tasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderTasks();
             });
+            dbCloud.collection("historico").orderBy("createdAt", "desc").onSnapshot(snap => {
+                localDB.history = snap.docs.map(doc => doc.data());
+                renderHistory();
+            });
         }
 
-        // --- ARQUIVOS ---
+        // UPLOAD COM TRATAMENTO DE ERRO PARA CELULAR
         function uploadToFirebase(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            const btn = document.getElementById('btnUpload');
+            const pCont = document.getElementById('progressContainer');
+            const pBar = document.getElementById('progressBar');
+
+            btn.disabled = true;
+            pCont.classList.remove('hidden');
+
             const ref = storage.ref('arquivos/' + Date.now() + "_" + file.name);
             const task = ref.put(file);
-            document.getElementById('progressContainer').classList.remove('hidden');
-            task.on('state_changed', s => {
-                document.getElementById('progressBar').style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%';
-            }, null, () => {
-                task.snapshot.ref.getDownloadURL().then(url => {
-                    const fileData = { name: file.name, date: new Date().toLocaleDateString('pt-BR'), url: url, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-                    dbCloud.collection("arquivos").add(fileData);
-                    document.getElementById('progressContainer').classList.add('hidden');
-                });
-            });
+
+            task.on('state_changed', 
+                (s) => pBar.style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%',
+                (err) => { 
+                    alert("Erro no upload: " + err.message + "\nVerifique as Rules do Storage.");
+                    btn.disabled = false;
+                    pCont.classList.add('hidden');
+                },
+                () => {
+                    task.snapshot.ref.getDownloadURL().then(url => {
+                        const fileData = { 
+                            name: file.name, 
+                            date: new Date().toLocaleDateString('pt-BR'), 
+                            url: url, 
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+                        };
+                        dbCloud.collection("arquivos").add(fileData).then(() => {
+                            pCont.classList.add('hidden');
+                            btn.disabled = false;
+                            alert("Sucesso!");
+                        });
+                    });
+                }
+            );
         }
 
         function renderFiles() {
@@ -198,17 +219,16 @@
             `).join('');
         }
 
-        // --- NOTAS (NUVEM) ---
         function addNote() {
             const text = prompt("Sua nota:");
             if(text) dbCloud.collection("notas").add({ text, date: new Date().toLocaleDateString('pt-BR'), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         }
 
         function renderNotes() {
-            const search = document.getElementById('search-note').value.toLowerCase();
+            const s = document.getElementById('search-note').value.toLowerCase();
             const list = document.getElementById('notes-list');
-            list.innerHTML = localDB.notes.filter(n => n.text.toLowerCase().includes(search)).map(n => `
-                <div class="bg-white p-6 rounded-[35px] shadow-sm relative group">
+            list.innerHTML = localDB.notes.filter(n => n.text.toLowerCase().includes(s)).map(n => `
+                <div class="bg-white p-6 rounded-[35px] shadow-sm">
                     <p class="text-slate-700 font-semibold leading-relaxed">${n.text}</p>
                     <div class="mt-4 flex justify-between items-center border-t pt-3">
                         <span class="text-[9px] font-black text-slate-300 uppercase">${n.date}</span>
@@ -218,7 +238,6 @@
             `).join('');
         }
 
-        // --- CRONOGRAMA ---
         function addSchedule() {
             const text = prompt("Atividade:");
             if(text) dbCloud.collection("tarefas_hoje").add({ text, done: false });
@@ -241,15 +260,19 @@
             if (localDB.tasks.length === 0) return;
             const done = localDB.tasks.filter(t => t.done).length;
             const perc = Math.round((done / localDB.tasks.length) * 100);
-            const historyData = { date: new Date().toLocaleDateString('pt-BR'), total: localDB.tasks.length, done, perc, items: localDB.tasks, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-            
+            const historyData = { 
+                date: new Date().toLocaleDateString('pt-BR'), 
+                total: localDB.tasks.length, 
+                done, 
+                perc, 
+                items: localDB.tasks, 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+            };
             await dbCloud.collection("historico").add(historyData);
-            
-            // Limpa as tarefas de hoje na nuvem
             const batch = dbCloud.batch();
             localDB.tasks.forEach(t => batch.delete(dbCloud.collection('tarefas_hoje').doc(t.id)));
             await batch.commit();
-            alert("Dia arquivado com sucesso!");
+            alert("Dia arquivado!");
         }
 
         function renderHistory() {
@@ -269,7 +292,11 @@
         function reviewDay(i) {
             const day = localDB.history[i];
             document.getElementById('modal-title').innerText = day.date;
-            document.getElementById('modal-content').innerHTML = day.items.map(it => `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between font-bold shadow-inner mb-2"><span class="${it.done?'text-green-600':'text-red-400'}">${it.text}</span><span>${it.done?'✔':'✘'}</span></div>`).join('');
+            document.getElementById('modal-content').innerHTML = day.items.map(it => `
+                <div class="p-4 bg-slate-50 rounded-2xl flex justify-between font-bold shadow-inner mb-2">
+                    <span class="${it.done?'text-green-600':'text-red-400'}">${it.text}</span>
+                    <span>${it.done?'✔':'✘'}</span>
+                </div>`).join('');
             document.getElementById('modal-review').classList.remove('hidden');
         }
 
@@ -278,3 +305,4 @@
     </script>
 </body>
 </html>
+
