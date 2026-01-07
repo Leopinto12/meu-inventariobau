@@ -3,126 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTÁRIO VISÃO - SISTEMA INTEGRADO</title>
+    <title>VISÃO PRO v2.0</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .sidebar-btn.active { background: #2563eb; color: white; transform: scale(1.05); }
+        input, button { transition: all 0.2s ease; }
         @media (max-width: 768px) {
-            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; flex-direction: row; border-top: 1px solid #f1f5f9; z-index: 50; background: white; }
-            .sidebar-btn { flex-direction: column; font-size: 10px; gap: 2px; justify-content: center; flex: 1; }
-            main { padding-bottom: 90px; }
-            .hide-mobile { display: none; }
+            .nav-bottom { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; background: white; border-top: 1px solid #e2e8f0; z-index: 100; height: 75px; padding-bottom: env(safe-area-inset-bottom); }
+            .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #64748b; }
+            main { padding-bottom: 100px; }
         }
-        .sidebar-btn.active { background-color: #eff6ff; color: #2563eb; border-radius: 15px; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="text-slate-900">
 
-    <div id="login-page" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 px-6">
-        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter mb-6">Inventário Visão</h2>
-            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
-                <input type="password" id="pass" placeholder="Senha de Acesso" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">ENTRAR</button>
-            </form>
+    <div id="login-page" class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900 px-6">
+        <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
+            <h1 class="text-3xl font-black italic mb-8 tracking-tighter text-blue-600">VISÃO PRO</h1>
+            <input type="password" id="pass" placeholder="Senha" class="w-full p-5 bg-slate-100 rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-center">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black shadow-lg shadow-blue-500/30">ENTRAR</button>
         </div>
     </div>
 
-    <div id="app-page" class="flex flex-col md:flex-row h-screen hidden">
-        <aside class="sidebar w-64 bg-white border-r border-slate-100 flex flex-col shadow-sm p-2">
-            <div class="p-6 font-black text-xl text-blue-600 italic tracking-tighter hide-mobile">VISÃO PRO</div>
-            <nav class="flex flex-row md:flex-col flex-1 gap-1">
-                <button onclick="showTab('tab-arquivos', this)" class="sidebar-btn active flex items-center gap-3 p-3 font-bold text-slate-400">📂<span>Arquivos</span></button>
-                <button onclick="showTab('tab-notas', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400">📝<span>Notas</span></button>
-                <button onclick="showTab('tab-relatorio', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400">📊<span>Relatório</span></button>
-                <button onclick="showTab('tab-financeiro', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400">💰<span>Finanças</span></button>
-                <button onclick="showTab('tab-investimentos', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400">📈<span>Metas</span></button>
-            </nav>
-        </aside>
+    <div id="app-page" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <nav class="nav-bottom md:w-64 md:flex-col md:static md:h-screen md:p-4 md:border-r">
+            <div class="hidden md:block p-6 font-black italic text-2xl text-blue-600">VISÃO</div>
+            <button onclick="showTab('tab-files', this)" class="nav-item sidebar-btn active md:mb-2 md:rounded-2xl md:p-4">📁<span>Arquivos</span></button>
+            <button onclick="showTab('tab-finance', this)" class="nav-item sidebar-btn md:mb-2 md:rounded-2xl md:p-4">💰<span>Dinheiro</span></button>
+            <button onclick="showTab('tab-goals', this)" class="nav-item sidebar-btn md:mb-2 md:rounded-2xl md:p-4">📈<span>Metas</span></button>
+            <button onclick="showTab('tab-notes', this)" class="nav-item sidebar-btn md:mb-2 md:rounded-2xl md:p-4">📝<span>Notas</span></button>
+        </nav>
 
-        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main class="flex-1 p-5 md:p-10 max-w-5xl mx-auto w-full">
             
-            <div class="mb-6 bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
-                <span class="font-black text-[10px] uppercase text-slate-400">Calendário:</span>
-                <input type="date" id="global-filter-date" onchange="renderAll()" class="flex-1 bg-slate-50 p-2 rounded-xl border-none font-bold text-blue-600 outline-none">
-                <button onclick="document.getElementById('global-filter-date').value=''; renderAll()" class="text-xs font-bold text-red-500">Limpar</button>
-            </div>
-
-            <section id="tab-arquivos" class="tab-content active">
-                <div class="flex flex-col gap-4 mb-8">
-                    <h2 class="text-3xl font-black italic">COFRE CLOUD</h2>
-                    <button onclick="document.getElementById('fileUpload').click()" id="btnUpload" class="bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">+ NOVO ARQUIVO</button>
-                    <input type="file" id="fileUpload" class="hidden" onchange="uploadToFirebase(event)">
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 id="tab-title" class="text-3xl font-black italic uppercase tracking-tighter">Arquivos</h2>
+                    <p id="current-date-display" class="text-xs font-bold text-slate-400 uppercase"></p>
                 </div>
-                <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </section>
+                <input type="date" id="global-filter" onchange="renderAll()" class="bg-white border rounded-xl p-2 text-xs font-bold shadow-sm outline-none">
+            </header>
 
-            <section id="tab-notas" class="tab-content">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-black italic">NOTAS</h2>
-                    <button onclick="addNote()" class="bg-slate-800 text-white px-6 py-2 rounded-xl font-bold">+ CRIAR</button>
+            <section id="tab-files" class="tab-content active">
+                <div class="bg-blue-600 p-8 rounded-[40px] text-white shadow-xl shadow-blue-200 mb-8 relative overflow-hidden">
+                    <h3 class="font-bold opacity-80 mb-1">Armazenamento Nuvem</h3>
+                    <p class="text-sm font-medium mb-6">Seus documentos protegidos.</p>
+                    <button onclick="document.getElementById('up').click()" class="bg-white text-blue-600 px-8 py-3 rounded-2xl font-black text-sm shadow-lg">+ NOVO UPLOAD</button>
+                    <input type="file" id="up" class="hidden" onchange="uploadFile(event)">
                 </div>
-                <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div id="file-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
             </section>
 
-            <section id="tab-relatorio" class="tab-content">
-                <h2 class="text-3xl font-black italic mb-6">HISTÓRICO</h2>
-                <div id="history-list" class="space-y-4"></div>
-            </section>
-
-            <section id="tab-financeiro" class="tab-content">
-                <h2 class="text-3xl font-black italic mb-6">FINANCEIRO</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div class="bg-green-600 p-6 rounded-[35px] text-white shadow-lg">
-                        <p class="text-xs font-bold opacity-80">SALDO DISPONÍVEL</p>
-                        <h3 id="fin-saldo" class="text-3xl font-black">R$ 0,00</h3>
+            <section id="tab-finance" class="tab-content">
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-6 rounded-[35px] shadow-sm border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-1 uppercase">Saldo Mês</p>
+                        <h4 id="resumo-saldo" class="text-xl font-black text-green-600">R$ 0,00</h4>
                     </div>
-                    <div class="bg-white p-6 rounded-[35px] border border-slate-200">
-                        <p class="text-xs font-bold text-slate-400">GASTOS DO MÊS</p>
-                        <h3 id="fin-gastos" class="text-3xl font-black text-red-500">R$ 0,00</h3>
+                    <div class="bg-white p-6 rounded-[35px] shadow-sm border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-1 uppercase">Total Gastos</p>
+                        <h4 id="resumo-gastos" class="text-xl font-black text-red-500">R$ 0,00</h4>
                     </div>
                 </div>
                 <div class="flex gap-2 mb-6">
-                    <button onclick="addFinance('receita')" class="flex-1 bg-green-100 text-green-700 p-4 rounded-2xl font-bold">Rendimento</button>
-                    <button onclick="addFinance('despesa')" class="flex-1 bg-red-100 text-red-700 p-4 rounded-2xl font-bold">Gasto/Cartão</button>
+                    <button onclick="addFinance('entrada')" class="flex-1 bg-green-500 text-white p-4 rounded-2xl font-black text-xs shadow-lg shadow-green-100">+ ENTRADA</button>
+                    <button onclick="addFinance('saida')" class="flex-1 bg-red-500 text-white p-4 rounded-2xl font-black text-xs shadow-lg shadow-red-100">+ GASTO/CARTÃO</button>
                 </div>
                 <div id="finance-list" class="space-y-3"></div>
             </section>
 
-            <section id="tab-investimentos" class="tab-content">
-                <h2 class="text-3xl font-black italic mb-6">METAS</h2>
-                <div id="meta-container" class="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center mb-6">
-                    <p id="meta-nome" class="font-black text-xs text-slate-400 uppercase mb-2">Sem Meta</p>
-                    <h3 id="meta-valor-atual" class="text-4xl font-black mb-4">R$ 0,00</h3>
-                    <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden mb-2">
-                        <div id="meta-progresso-bar" class="bg-blue-600 h-full w-0 transition-all duration-1000"></div>
+            <section id="tab-goals" class="tab-content">
+                <div id="goal-card" class="bg-white p-10 rounded-[50px] border shadow-sm text-center mb-6">
+                    <p id="goal-name" class="font-black text-slate-400 text-xs uppercase tracking-widest mb-2">Sem objetivo</p>
+                    <h3 id="goal-current" class="text-4xl font-black mb-6">R$ 0,00</h3>
+                    <div class="w-full bg-slate-100 h-6 rounded-full overflow-hidden mb-4 p-1">
+                        <div id="goal-bar" class="bg-blue-600 h-full rounded-full transition-all duration-1000 shadow-inner" style="width: 0%"></div>
                     </div>
-                    <p id="meta-porcentagem" class="font-black text-blue-600 text-sm">0%</p>
+                    <p id="goal-perc" class="text-blue-600 font-black">0% Concluído</p>
                 </div>
-                <button onclick="addInvestimento()" class="w-full bg-slate-900 text-white p-5 rounded-3xl font-black mb-4">+ APORTAR VALOR</button>
-                <button onclick="definirMeta()" class="w-full text-slate-400 font-bold text-xs uppercase">Configurar Meta</button>
+                <div class="flex gap-2">
+                    <button onclick="addInvest()" class="flex-1 bg-slate-900 text-white p-5 rounded-3xl font-black">APORTAR</button>
+                    <button onclick="setGoal()" class="bg-slate-200 text-slate-600 p-5 rounded-3xl font-black">⚙️</button>
+                </div>
             </section>
+
+            <section id="tab-notes" class="tab-content">
+                <button onclick="addNote()" class="w-full bg-white border-2 border-dashed border-slate-300 p-6 rounded-[35px] text-slate-400 font-bold mb-6 hover:border-blue-500 hover:text-blue-500">+ Escrever nova nota...</button>
+                <div id="notes-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            </section>
+
         </main>
     </div>
 
-    <div id="modal-edit" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl">
-            <h3 class="font-black text-xl mb-6 italic uppercase">Editar Itens</h3>
-            <div id="modal-edit-body" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2"></div>
-            <button onclick="closeEditModal()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black mt-6">CONCLUÍDO</button>
-        </div>
-    </div>
-
     <script>
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
             authDomain: "inventario-visao.firebaseapp.com",
@@ -135,161 +120,153 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const storage = firebase.storage();
-        let localDB = { history: [], notes: [], files: [], finance: [], investments: [] };
+        let store = { files: [], finance: [], notes: [], goal: null };
 
-        function handleLogin(e) {
-            e.preventDefault();
+        // DATA ATUAL
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('current-date-display').innerText = hoje;
+
+        // LOGIN
+        function handleLogin() {
             if(document.getElementById('pass').value === "lnventario2026") {
-                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('login-page').style.display = 'none';
                 document.getElementById('app-page').classList.remove('hidden');
-                startSync();
-            } else { alert("Senha incorreta!"); }
+                init();
+            } else { alert("Senha incorreta"); }
         }
 
+        // NAVEGAÇÃO
         function showTab(id, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600'));
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            document.getElementById('tab-title').innerText = btn.innerText.replace(/[^\w\s]/gi, '');
         }
 
-        function startSync() {
-            db.collection("arquivos").orderBy("createdAt", "desc").onSnapshot(s => { localDB.files = s.docs.map(d => ({id: d.id, ...d.data()})); renderFiles(); });
-            db.collection("notas").orderBy("createdAt", "desc").onSnapshot(s => { localDB.notes = s.docs.map(d => ({id: d.id, ...d.data()})); renderNotes(); });
-            db.collection("historico").orderBy("createdAt", "desc").onSnapshot(s => { localDB.history = s.docs.map(d => ({id: d.id, ...d.data()})); renderRelatorio(); });
-            db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => { localDB.finance = s.docs.map(d => ({id: d.id, ...d.data()})); renderFinanceiro(); });
-            
-            db.collection("metas").doc("principal").onSnapshot(doc => { if(doc.exists) renderMetaUI(doc.data()); });
+        // INICIALIZAÇÃO
+        function init() {
+            db.collection("arquivos").orderBy("createdAt", "desc").onSnapshot(s => { store.files = s.docs.map(d => ({id: d.id, ...d.data()})); renderFiles(); });
+            db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => { store.finance = s.docs.map(d => ({id: d.id, ...d.data()})); renderFinance(); });
+            db.collection("notas").orderBy("createdAt", "desc").onSnapshot(s => { store.notes = s.docs.map(d => ({id: d.id, ...d.data()})); renderNotes(); });
+            db.collection("metas").doc("principal").onSnapshot(d => { store.goal = d.data(); renderGoal(); });
         }
 
-        function renderAll() { renderFiles(); renderNotes(); renderRelatorio(); renderFinanceiro(); }
+        function renderAll() { renderFiles(); renderFinance(); renderNotes(); }
 
-        // --- MÓDULO ARQUIVOS ---
-        async function uploadToFirebase(e) {
+        // MÓDULO: ARQUIVOS
+        async function uploadFile(e) {
             const file = e.target.files[0];
             if(!file) return;
-            const ref = storage.ref('arquivos/' + Date.now() + "_" + file.name);
+            const path = `arquivos/${Date.now()}_${file.name}`;
+            const ref = storage.ref(path);
+            alert("Enviando...");
             await ref.put(file);
             const url = await ref.getDownloadURL();
-            await db.collection("arquivos").add({ name: file.name, url: url, date: new Date().toLocaleDateString('pt-BR'), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            alert("Enviado!");
+            await db.collection("arquivos").add({ name: file.name, url, date: hoje, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         }
 
         function renderFiles() {
-            const filter = document.getElementById('global-filter-date').value;
+            const filter = document.getElementById('global-filter').value;
             const dataF = filter ? new Date(filter).toLocaleDateString('pt-BR') : null;
-            document.getElementById('file-list').innerHTML = localDB.files.filter(f => !dataF || f.date === dataF).map(f => `
-                <div class="bg-white p-4 rounded-3xl shadow-sm border flex justify-between items-center">
-                    <span class="font-bold text-sm truncate pr-4">${f.name}</span>
-                    <a href="${f.url}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold">ABRIR</a>
-                </div>`).join('');
-        }
-
-        // --- MÓDULO NOTAS ---
-        function addNote() {
-            const t = prompt("Nota:");
-            if(t) db.collection("notas").add({ text: t, date: new Date().toLocaleDateString('pt-BR'), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-
-        function renderNotes() {
-            const filter = document.getElementById('global-filter-date').value;
-            const dataF = filter ? new Date(filter).toLocaleDateString('pt-BR') : null;
-            document.getElementById('notes-list').innerHTML = localDB.notes.filter(n => !dataF || n.date === dataF).map(n => `
-                <div class="bg-white p-5 rounded-[30px] border shadow-sm">
-                    <p class="font-semibold text-slate-700">${n.text}</p>
-                    <button onclick="db.collection('notas').doc('${n.id}').delete()" class="mt-4 text-[10px] text-red-400 font-bold uppercase">Apagar</button>
-                </div>`).join('');
-        }
-
-        // --- MÓDULO RELATÓRIO ---
-        function renderRelatorio() {
-            const filter = document.getElementById('global-filter-date').value;
-            const dataF = filter ? new Date(filter).toLocaleDateString('pt-BR') : null;
-            const hoje = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('history-list').innerHTML = localDB.history.filter(h => !dataF || h.date === dataF).map(h => `
-                <div class="bg-white p-6 rounded-[35px] border-l-8 border-blue-600 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-black">${h.date} - ${h.perc}%</h4>
-                        ${h.date === hoje ? `<button onclick="editChecklist('${h.id}')" class="text-blue-600 font-bold text-xs">EDITAR</button>` : ''}
-                    </div>
-                    <div class="space-y-1 text-xs text-slate-500 font-bold">
-                        ${h.items.map(it => `<div>${it.done ? '✅':'❌'} ${it.text}</div>`).join('')}
+            const list = document.getElementById('file-list');
+            list.innerHTML = store.files.filter(f => !dataF || f.date === dataF).map(f => `
+                <div class="bg-white p-5 rounded-[30px] shadow-sm flex justify-between items-center border border-slate-50">
+                    <div class="truncate pr-4"><p class="font-black text-sm truncate">${f.name}</p><p class="text-[9px] text-slate-300 font-bold">${f.date}</p></div>
+                    <div class="flex gap-2">
+                        <a href="${f.url}" target="_blank" class="bg-blue-50 text-blue-600 p-3 rounded-2xl text-[10px] font-black">ABRIR</a>
+                        <button onclick="deleteDoc('arquivos','${f.id}')" class="text-red-200 hover:text-red-500 px-2 font-bold">✕</button>
                     </div>
                 </div>`).join('');
         }
 
-        function editChecklist(id) {
-            const h = localDB.history.find(x => x.id === id);
-            document.getElementById('modal-edit-body').innerHTML = h.items.map((it, idx) => `
-                <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl">
-                    <input type="checkbox" ${it.done?'checked':''} onchange="updateTaskStatus('${id}', ${idx}, this.checked)" class="w-6 h-6">
-                    <input type="text" value="${it.text}" onchange="updateTaskText('${id}', ${idx}, this.value)" class="bg-transparent font-bold text-sm outline-none flex-1">
-                </div>`).join('');
-            document.getElementById('modal-edit').classList.remove('hidden');
-        }
-
-        function closeEditModal() { document.getElementById('modal-edit').classList.add('hidden'); }
-
-        async function updateTaskStatus(id, idx, status) {
-            const h = localDB.history.find(x => x.id === id);
-            h.items[idx].done = status;
-            const perc = Math.round((h.items.filter(i => i.done).length / h.items.length) * 100);
-            await db.collection("historico").doc(id).update({ items: h.items, perc: perc });
-        }
-
-        async function updateTaskText(id, idx, text) {
-            const h = localDB.history.find(x => x.id === id);
-            h.items[idx].text = text;
-            await db.collection("historico").doc(id).update({ items: h.items });
-        }
-
-        // --- MÓDULO FINANCEIRO ---
+        // MÓDULO: FINANCEIRO
         async function addFinance(tipo) {
-            const desc = prompt("O que foi?");
-            const valor = parseFloat(prompt("Valor (Ex: 150.50):"));
+            const desc = prompt("Descrição:");
+            const valor = parseFloat(prompt("Valor (R$):"));
             if(!desc || isNaN(valor)) return;
             let parcelas = 1;
-            if(tipo === 'despesa') parcelas = parseInt(prompt("Parcelas (1 para à vista):") || "1");
-            await db.collection("financeiro").add({ desc, valor, tipo, parcelas, date: new Date().toLocaleDateString('pt-BR'), mes: new Date().getMonth(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            if(tipo === 'saida') parcelas = parseInt(prompt("Parcelas (1 para à vista):") || 1);
+            
+            await db.collection("financeiro").add({
+                desc, valor, tipo, parcelas, 
+                date: hoje, 
+                mes: new Date().getMonth(), 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
 
-        function renderFinanceiro() {
+        function renderFinance() {
             let saldo = 0, gastos = 0;
             const mesAtual = new Date().getMonth();
-            document.getElementById('finance-list').innerHTML = localDB.finance.map(f => {
-                const valorParcela = f.valor / f.parcelas;
+            const list = document.getElementById('finance-list');
+            
+            list.innerHTML = store.finance.map(f => {
+                const vParcela = f.valor / f.parcelas;
                 if(f.mes === mesAtual) {
-                    if(f.tipo === 'receita') saldo += f.valor;
-                    else gastos += valorParcela;
+                    if(f.tipo === 'entrada') saldo += f.valor;
+                    else gastos += vParcela;
                 }
-                return `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center">
-                    <div><p class="font-bold text-sm">${f.desc}</p><p class="text-[9px] uppercase font-black text-slate-300">${f.tipo} ${f.parcelas > 1 ? '- Parcela':''}</p></div>
-                    <p class="font-black ${f.tipo==='receita'?'text-green-600':'text-red-500'}">R$ ${valorParcela.toFixed(2)}</p>
+                return `
+                <div class="bg-white p-5 rounded-[25px] shadow-sm flex justify-between items-center border border-slate-50">
+                    <div><p class="font-black text-sm">${f.desc}</p><p class="text-[9px] font-bold text-slate-300 uppercase">${f.tipo} ${f.parcelas > 1 ? `(${f.parcelas}x)` : ''}</p></div>
+                    <div class="text-right">
+                        <p class="font-black ${f.tipo === 'entrada' ? 'text-green-500' : 'text-red-500'}">R$ ${vParcela.toFixed(2)}</p>
+                        <button onclick="deleteDoc('financeiro','${f.id}')" class="text-[8px] font-bold text-slate-300">EXCLUIR</button>
+                    </div>
                 </div>`;
             }).join('');
-            document.getElementById('fin-saldo').innerText = `R$ ${(saldo - gastos).toFixed(2)}`;
-            document.getElementById('fin-gastos').innerText = `R$ ${gastos.toFixed(2)}`;
+            
+            document.getElementById('resumo-saldo').innerText = `R$ ${(saldo - gastos).toFixed(2)}`;
+            document.getElementById('resumo-gastos').innerText = `R$ ${gastos.toFixed(2)}`;
         }
 
-        // --- MÓDULO METAS ---
-        async function definirMeta() {
-            const nome = prompt("Nome da Meta:");
-            const objetivo = parseFloat(prompt("Valor total (R$):"));
+        // MÓDULO: METAS
+        async function setGoal() {
+            const nome = prompt("Nome do Objetivo:");
+            const objetivo = parseFloat(prompt("Valor Final (R$):"));
             if(nome && objetivo) await db.collection("metas").doc("principal").set({ nome, objetivo, atual: 0 });
         }
 
-        async function addInvestimento() {
-            const v = parseFloat(prompt("Valor do Aporte:"));
+        async function addInvest() {
+            const v = parseFloat(prompt("Valor do Aporte (R$):"));
             if(!isNaN(v)) await db.collection("metas").doc("principal").update({ atual: firebase.firestore.FieldValue.increment(v) });
         }
 
-        function renderMetaUI(data) {
-            const perc = Math.min((data.atual / data.objetivo) * 100, 100).toFixed(1);
-            document.getElementById('meta-nome').innerText = data.nome;
-            document.getElementById('meta-valor-atual').innerText = `R$ ${data.atual.toLocaleString('pt-BR')}`;
-            document.getElementById('meta-progresso-bar').style.width = perc + "%";
-            document.getElementById('meta-porcentagem').innerText = perc + "% CONCLUÍDO";
+        function renderGoal() {
+            if(!store.goal) return;
+            const perc = Math.min((store.goal.atual / store.goal.objetivo) * 100, 100).toFixed(1);
+            document.getElementById('goal-name').innerText = store.goal.nome;
+            document.getElementById('goal-current').innerText = `R$ ${store.goal.atual.toLocaleString('pt-BR')}`;
+            document.getElementById('goal-bar').style.width = perc + "%";
+            document.getElementById('goal-perc').innerText = perc + "% CONCLUÍDO";
         }
+
+        // MÓDULO: NOTAS
+        async function addNote() {
+            const text = prompt("Escreva sua nota:");
+            if(text) await db.collection("notas").add({ text, date: hoje, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+
+        function renderNotes() {
+            const filter = document.getElementById('global-filter').value;
+            const dataF = filter ? new Date(filter).toLocaleDateString('pt-BR') : null;
+            const list = document.getElementById('notes-list');
+            list.innerHTML = store.notes.filter(n => !dataF || n.date === dataF).map(n => `
+                <div class="bg-white p-6 rounded-[35px] shadow-sm border border-slate-50 relative">
+                    <p class="font-bold text-slate-600 leading-relaxed">${n.text}</p>
+                    <div class="mt-4 flex justify-between items-center border-t pt-3">
+                        <span class="text-[9px] font-black text-slate-300 uppercase">${n.date}</span>
+                        <button onclick="deleteDoc('notas','${n.id}')" class="text-red-300 text-xs font-bold">APAGAR</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function deleteDoc(col, id) {
+            if(confirm("Deseja excluir permanentemente?")) await db.collection(col).doc(id).delete();
+        }
+
     </script>
 </body>
 </html>
+
