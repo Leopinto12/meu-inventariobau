@@ -3,46 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTÁRIO VISÃO - FINAL</title>
+    <title>INVENTÁRIO VISÃO - OFICIAL</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; flex-direction: row; border-top: 1px solid #f1f5f9; z-index: 50; background: white; }
+            .sidebar-btn { flex-direction: column; font-size: 10px; gap: 4px; justify-content: center; flex: 1; }
+            main { padding-bottom: 100px; }
+            .hide-mobile { display: none; }
+        }
         .sidebar-btn.active { background-color: #eff6ff; color: #2563eb; border-radius: 15px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
     <div id="login-page" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 px-6">
-        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-2xl font-black text-slate-800 uppercase italic mb-6">Inventário Visão</h2>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm text-center border border-slate-100">
+            <div class="mb-6">
+                <div class="w-20 h-20 bg-blue-600 rounded-[25px] flex items-center justify-center mx-auto mb-4 font-black text-white text-3xl shadow-xl">IV</div>
+                <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Inventário Visão</h2>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
                 <input type="text" id="user" placeholder="Usuário" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
                 <input type="password" id="pass" placeholder="Senha" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95">ENTRAR</button>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">ENTRAR</button>
             </form>
         </div>
     </div>
 
     <div id="app-page" class="flex flex-col md:flex-row h-screen hidden">
+        <aside class="sidebar w-64 bg-white border-r border-slate-100 flex flex-col shadow-sm">
+            <div class="p-8 font-black text-2xl text-blue-600 italic tracking-tighter hide-mobile">INVENTÁRIO</div>
+            <nav class="flex flex-row md:flex-col flex-1 gap-1 md:px-3">
+                <button onclick="showTab('tab-arquivos', this)" class="sidebar-btn active flex items-center gap-3 p-3 font-bold"><span class="text-xl">☁️</span> <span>Arquivos</span></button>
+                <button onclick="showTab('tab-notas', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400"><span class="text-xl">📝</span> <span>Notas</span></button>
+            </nav>
+        </aside>
+
         <main class="flex-1 p-5 md:p-10 overflow-y-auto">
             <section id="tab-arquivos" class="tab-content active">
-                <h2 class="text-3xl font-black uppercase italic mb-8">Cofre Cloud</h2>
-                <div class="flex gap-2 mb-6">
-                    <button onclick="document.getElementById('fileUpload').click()" id="btnUpload" class="bg-blue-600 text-white px-6 py-4 rounded-2xl font-black shadow-lg w-full">+ SUBIR ARQUIVO</button>
+                <div class="flex flex-col gap-4 mb-8">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Cofre Cloud</h2>
+                    <button onclick="document.getElementById('fileUpload').click()" id="btnUpload" class="bg-blue-600 text-white px-6 py-5 rounded-2xl font-black shadow-lg active:scale-95 transition-all w-full md:w-auto">+ SUBIR NOVO ARQUIVO</button>
                     <input type="file" id="fileUpload" class="hidden" onchange="uploadToFirebase(event)">
                 </div>
-                <div id="progressContainer" class="hidden w-full bg-gray-200 rounded-full h-2 mb-6">
-                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                
+                <div id="progressContainer" class="hidden w-full bg-gray-200 rounded-full h-3 mb-6">
+                    <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all" style="width: 0%"></div>
                 </div>
-                <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+                <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+            </section>
+
+            <section id="tab-notas" class="tab-content">
+                <div class="flex flex-col gap-4 mb-8">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Notas Nuvem</h2>
+                    <button onclick="addNote()" class="bg-slate-800 text-white py-4 rounded-2xl font-black uppercase shadow-lg">+ Criar Nota</button>
+                </div>
+                <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </section>
         </main>
     </div>
@@ -61,63 +90,109 @@
         const storage = firebase.storage();
         const dbCloud = firebase.firestore();
 
-        // Limpa cache antigo para forçar nova conexão
+        // Limpa cache para garantir sincronia real
         localStorage.clear();
 
         function handleLogin(e) {
             e.preventDefault();
-            if(document.getElementById('user').value === "Leoinventario" && document.getElementById('pass').value === "lnventario2026") {
+            const pass = document.getElementById('pass').value;
+            if(pass === "lnventario2026") {
                 document.getElementById('login-page').classList.add('hidden');
                 document.getElementById('app-page').classList.remove('hidden');
-                syncData();
-            } else { alert("Senha incorreta!"); }
+                startSync();
+            } else { alert("Acesso Negado!"); }
         }
 
-        function syncData() {
-            // Sincroniza arquivos em tempo real
+        function showTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600'));
+            btn.classList.add('active');
+        }
+
+        function startSync() {
+            // Sincroniza Arquivos
             dbCloud.collection("arquivos").orderBy("createdAt", "desc").onSnapshot(snap => {
                 const list = document.getElementById('file-list');
                 list.innerHTML = snap.docs.map(doc => {
                     const f = doc.data();
-                    return `<div class="bg-white p-5 rounded-[30px] shadow-sm flex justify-between items-center border border-slate-100">
-                        <div class="truncate"><p class="font-bold text-sm truncate">${f.name}</p></div>
+                    return `
+                    <div class="bg-white p-5 rounded-[30px] shadow-sm flex justify-between items-center border border-slate-50">
+                        <div class="truncate pr-2">
+                            <p class="font-bold text-sm truncate">${f.name}</p>
+                            <p class="text-[9px] font-black text-slate-300 uppercase">${f.date || 'Recente'}</p>
+                        </div>
                         <a href="${f.url}" target="_blank" class="bg-blue-50 text-blue-600 p-3 rounded-2xl text-[10px] font-black">ABRIR</a>
                     </div>`;
                 }).join('');
             });
+
+            // Sincroniza Notas
+            dbCloud.collection("notas").orderBy("createdAt", "desc").onSnapshot(snap => {
+                const list = document.getElementById('notes-list');
+                list.innerHTML = snap.docs.map(doc => `
+                    <div class="bg-white p-6 rounded-[35px] shadow-sm relative group">
+                        <p class="text-slate-700 font-semibold">${doc.data().text}</p>
+                        <div class="mt-4 flex justify-between items-center border-t pt-3">
+                            <span class="text-[9px] font-black text-slate-300 uppercase">${doc.data().date}</span>
+                            <button onclick="deleteNote('${doc.id}')" class="text-red-400 font-bold text-xs">APAGAR</button>
+                        </div>
+                    </div>`).join('');
+            });
         }
 
-        function uploadToFirebase(e) {
+        async function uploadToFirebase(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             const btn = document.getElementById('btnUpload');
-            const pBar = document.getElementById('progressBar');
             const pCont = document.getElementById('progressContainer');
+            const pBar = document.getElementById('progressBar');
 
             btn.disabled = true;
             pCont.classList.remove('hidden');
 
-            const ref = storage.ref('arquivos/' + Date.now() + "_" + file.name);
-            const task = ref.put(file);
-
-            task.on('state_changed', 
-                (s) => pBar.style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%',
-                (err) => { alert("Erro CORS ou Permissão: " + err.message); btn.disabled = false; },
-                () => {
-                    task.snapshot.ref.getDownloadURL().then(url => {
-                        dbCloud.collection("arquivos").add({
+            try {
+                const fileName = `${Date.now()}_${file.name}`;
+                const ref = storage.ref('arquivos/' + fileName);
+                
+                const task = ref.put(file);
+                
+                task.on('state_changed', 
+                    (s) => pBar.style.width = (s.bytesTransferred / s.totalBytes) * 100 + '%',
+                    (err) => { alert("Erro CORS ou de Permissão no Storage."); btn.disabled = false; },
+                    async () => {
+                        const url = await task.snapshot.ref.getDownloadURL();
+                        await dbCloud.collection("arquivos").add({
                             name: file.name,
                             url: url,
+                            date: new Date().toLocaleDateString('pt-BR'),
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then(() => {
-                            pCont.classList.add('hidden');
-                            btn.disabled = false;
-                            alert("Arquivo salvo na nuvem!");
                         });
-                    });
-                }
-            );
+                        pCont.classList.add('hidden');
+                        btn.disabled = false;
+                        alert("Arquivo Enviado!");
+                    }
+                );
+            } catch (error) {
+                alert("Falha no envio.");
+                btn.disabled = false;
+            }
+        }
+
+        function addNote() {
+            const text = prompt("Digite a nota:");
+            if(text) {
+                dbCloud.collection("notas").add({
+                    text: text,
+                    date: new Date().toLocaleDateString('pt-BR'),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+
+        function deleteNote(id) {
+            if(confirm("Apagar nota?")) dbCloud.collection("notas").doc(id).delete();
         }
     </script>
 </body>
