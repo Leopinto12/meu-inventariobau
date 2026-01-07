@@ -3,145 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTÁRIO VISÃO</title>
+    <title>INVENTÁRIO VISÃO - CLOUD</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* Estilo da barra de navegação inferior para celular */
         @media (max-width: 768px) {
-            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; flex-direction: row; border-top: 1px solid #e2e8f0; z-index: 50; }
-            .sidebar-btn { flex-direction: column; font-size: 10px; gap: 4px; justify-content: center; }
-            main { padding-bottom: 90px; }
+            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; flex-direction: row; border-top: 1px solid #f1f5f9; z-index: 50; background: white; }
+            .sidebar-btn { flex-direction: column; font-size: 10px; gap: 4px; justify-content: center; flex: 1; }
+            main { padding-bottom: 100px; }
             .hide-mobile { display: none; }
         }
-        .sidebar-btn.active { background-color: #eff6ff; color: #2563eb; }
+        .sidebar-btn.active { background-color: #eff6ff; color: #2563eb; border-radius: 15px; }
         .done-text { text-decoration: line-through; opacity: 0.5; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 text-slate-900">
 
     <div id="login-page" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 px-6">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm">
+        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm">
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-black text-white text-2xl">IV</div>
+                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-black text-white text-2xl shadow-xl">IV</div>
                 <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Inventário Visão</h2>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" id="user" placeholder="Usuário" class="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-                <input type="password" id="pass" placeholder="Senha" class="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg">ENTRAR</button>
+                <input type="text" id="user" placeholder="Usuário" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
+                <input type="password" id="pass" placeholder="Senha" class="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-lg" required>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">ENTRAR</button>
             </form>
         </div>
     </div>
 
     <div id="app-page" class="flex flex-col md:flex-row h-screen hidden">
-        
-        <aside class="sidebar w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm">
-            <div class="p-6 font-black text-xl text-blue-600 italic hide-mobile tracking-tighter">INVENTÁRIO VISAO</div>
-            <nav class="flex flex-row md:flex-col flex-1 px-2 md:px-3 gap-1">
-                <button onclick="showTab('tab-arquivos', this)" class="sidebar-btn active flex-1 md:flex-none flex items-center gap-3 p-3 rounded-xl font-bold">
-                    <span class="text-xl">📁</span> <span class="md:block">Arquivos</span>
-                </button>
-                <button onclick="showTab('tab-cronograma', this)" class="sidebar-btn flex-1 md:flex-none flex items-center gap-3 p-3 rounded-xl font-bold text-slate-500">
-                    <span class="text-xl">📅</span> <span class="md:block">Hoje</span>
-                </button>
-                <button onclick="showTab('tab-notas', this)" class="sidebar-btn flex-1 md:flex-none flex items-center gap-3 p-3 rounded-xl font-bold text-slate-500">
-                    <span class="text-xl">📝</span> <span class="md:block">Notas</span>
-                </button>
-                <button onclick="showTab('tab-desempenho', this)" class="sidebar-btn flex-1 md:flex-none flex items-center gap-3 p-3 rounded-xl font-bold text-slate-500">
-                    <span class="text-xl">📊</span> <span class="md:block">Relatório</span>
-                </button>
+        <aside class="sidebar w-64 bg-white border-r border-slate-100 flex flex-col shadow-sm">
+            <div class="p-8 font-black text-2xl text-blue-600 italic tracking-tighter hide-mobile">INVENTÁRIO</div>
+            <nav class="flex flex-row md:flex-col flex-1 gap-1 md:px-3">
+                <button onclick="showTab('tab-arquivos', this)" class="sidebar-btn active flex items-center gap-3 p-3 font-bold"><span class="text-xl">☁️</span> <span>Arquivos</span></button>
+                <button onclick="showTab('tab-cronograma', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400"><span class="text-xl">📅</span> <span>Hoje</span></button>
+                <button onclick="showTab('tab-notas', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400"><span class="text-xl">📝</span> <span>Notas</span></button>
+                <button onclick="showTab('tab-desempenho', this)" class="sidebar-btn flex items-center gap-3 p-3 font-bold text-slate-400"><span class="text-xl">📊</span> <span>Relatório</span></button>
             </nav>
-            <div class="p-4 border-t hide-mobile"><button onclick="location.reload()" class="w-full text-red-500 font-bold p-2 hover:bg-red-50 rounded-xl">Sair</button></div>
         </aside>
 
-        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
-            
+        <main class="flex-1 p-5 md:p-10 overflow-y-auto">
             <section id="tab-arquivos" class="tab-content active">
-                <div class="flex flex-col gap-4 mb-6">
-                    <h2 class="text-2xl font-black uppercase italic tracking-tighter">Cofre Cloud</h2>
+                <div class="flex flex-col gap-4 mb-8">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-800">Cofre Cloud</h2>
                     <div class="flex gap-2">
-                        <input type="date" id="filter-date-files" onchange="renderFiles()" class="border p-3 rounded-2xl flex-1 text-sm outline-none">
-                        <button onclick="document.getElementById('fileUpload').click()" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-bold shadow-md">+ Subir</button>
+                        <input type="date" id="filter-date-files" onchange="renderFiles()" class="bg-white shadow-sm p-4 rounded-2xl flex-1 text-sm outline-none font-bold">
+                        <button onclick="document.getElementById('fileUpload').click()" id="btnUpload" class="bg-blue-600 text-white px-6 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all">+ SUBIR</button>
                         <input type="file" id="fileUpload" class="hidden" onchange="uploadToFirebase(event)">
                     </div>
                 </div>
                 <div id="progressContainer" class="hidden w-full bg-gray-200 rounded-full h-2 mb-6">
                     <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
                 </div>
-                <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </section>
 
             <section id="tab-cronograma" class="tab-content">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black uppercase italic tracking-tighter">Checklist</h2>
-                    <button onclick="addSchedule()" class="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-bold">+ Novo</button>
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter">Hoje</h2>
+                    <button onclick="addSchedule()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg">+ NOVO</button>
                 </div>
-                <div id="schedule-list" class="space-y-3 mb-6"></div>
-                <button onclick="saveDayPerformance()" class="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-lg active:scale-95 transition-transform">FINALIZAR DIA</button>
+                <div id="schedule-list" class="space-y-4 mb-8"></div>
+                <button onclick="saveDayPerformance()" class="w-full bg-green-600 text-white font-black py-5 rounded-[30px] shadow-xl active:scale-95 transition-all uppercase tracking-widest">Finalizar Dia</button>
             </section>
 
             <section id="tab-notas" class="tab-content">
-                <div class="flex flex-col gap-4 mb-6">
-                    <h2 class="text-2xl font-black uppercase italic tracking-tighter">Anotações</h2>
-                    <input type="text" id="search-note" oninput="renderNotes()" placeholder="Pesquisar..." class="border p-4 rounded-2xl text-base outline-none w-full">
-                    <button onclick="addNote()" class="bg-slate-800 text-white py-4 rounded-2xl font-bold">+ Criar Nota</button>
+                <div class="flex flex-col gap-4 mb-8">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-800">Anotações</h2>
+                    <div class="flex gap-2">
+                        <input type="text" id="search-note" oninput="renderNotes()" placeholder="Buscar..." class="bg-white shadow-sm p-4 rounded-2xl flex-1 outline-none font-medium">
+                        <input type="date" id="filter-date-notes" onchange="renderNotes()" class="bg-white shadow-sm p-4 rounded-2xl outline-none font-bold">
+                    </div>
+                    <button onclick="addNote()" class="bg-slate-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest">+ Nova Nota</button>
                 </div>
-                <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </section>
 
             <section id="tab-desempenho" class="tab-content">
-                <h2 class="text-2xl font-black uppercase italic tracking-tighter mb-6">Dashboard</h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Feitas</p>
+                <h2 class="text-3xl font-black uppercase italic tracking-tighter mb-8">Dashboard</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                    <div class="bg-white p-6 rounded-[35px] shadow-sm border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Tarefas OK</p>
                         <h4 id="dash-total" class="text-3xl font-black">0</h4>
                     </div>
-                    <div class="bg-blue-600 p-5 rounded-3xl text-white shadow-lg">
-                        <p class="text-[9px] font-black uppercase opacity-70">Média</p>
+                    <div class="bg-blue-600 p-6 rounded-[35px] text-white shadow-xl shadow-blue-500/30">
+                        <p class="text-[10px] font-black uppercase opacity-80 mb-1">Eficiência</p>
                         <h4 id="dash-avg" class="text-3xl font-black">0%</h4>
                     </div>
                 </div>
-                <div id="monthly-history" class="space-y-3"></div>
+                <div id="monthly-history" class="space-y-4"></div>
             </section>
-
         </main>
     </div>
 
-    <div id="modal-review" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-end md:items-center justify-center z-[200]">
-        <div class="bg-white w-full max-w-lg rounded-t-[40px] md:rounded-[40px] p-8 shadow-2xl animate-slide-up">
-            <div class="flex justify-between items-center mb-6">
-                <h3 id="modal-title" class="font-black text-xl uppercase italic">Revisão</h3>
-                <button onclick="closeModal()" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl font-bold">FECHAR</button>
+    <div id="modal-review" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-end md:items-center justify-center z-[200] p-4">
+        <div class="bg-white w-full max-w-lg rounded-[40px] p-8 shadow-2xl overflow-hidden">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 id="modal-title" class="font-black text-xl uppercase italic">REVISÃO</h3>
+                <button onclick="closeModal()" class="text-red-500 font-black text-xs bg-red-50 px-4 py-2 rounded-xl">FECHAR</button>
             </div>
-            <div id="modal-content" class="space-y-3 max-h-[50vh] overflow-y-auto pb-10"></div>
+            <div id="modal-content" class="space-y-3 max-h-[50vh] overflow-y-auto"></div>
         </div>
     </div>
 
     <script>
-        // --- COPIE SUAS CHAVES DO FIREBASE AQUI ---
+        // CONFIGURAÇÃO REAL DO SEU FIREBASE
         const firebaseConfig = {
-            apiKey: "COLE_AQUI",
-            authDomain: "COLE_AQUI",
-            projectId: "COLE_AQUI",
-            storageBucket: "COLE_AQUI",
-            messagingSenderId: "COLE_AQUI",
-            appId: "COLE_AQUI"
+            apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
+            authDomain: "inventario-visao.firebaseapp.com",
+            projectId: "inventario-visao",
+            storageBucket: "inventario-visao.firebasestorage.app",
+            messagingSenderId: "828286373134",
+            appId: "1:828286373134:web:9bafa5872cdf124bfddb5f"
         };
 
-        // Inicia Firebase apenas se as chaves existirem
-        if(firebaseConfig.apiKey !== "COLE_AQUI") {
-            firebase.initializeApp(firebaseConfig);
-            var storage = firebase.storage();
-        }
+        // Iniciar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
 
         let db = JSON.parse(localStorage.getItem('visaoDB')) || { files: [], tasks: [], notes: [], history: [] };
         function saveDB() { localStorage.setItem('visaoDB', JSON.stringify(db)); }
@@ -152,38 +140,44 @@
                 document.getElementById('login-page').classList.add('hidden');
                 document.getElementById('app-page').classList.remove('hidden');
                 renderAll();
-            } else { alert("Login Incorreto"); }
+            } else { alert("Senha incorreta!"); }
         }
 
         function showTab(id, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600', 'bg-blue-50'));
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600'));
             btn.classList.add('active');
             renderAll();
         }
 
-        // FIREBASE UPLOAD
+        // UPLOAD REAL PARA O STORAGE
         function uploadToFirebase(e) {
             const file = e.target.files[0];
-            if(!file || !storage) return alert("Configure o Firebase primeiro!");
+            if (!file) return;
 
-            const ref = storage.ref('inventario/' + Date.now() + "_" + file.name);
+            const btn = document.getElementById('btnUpload');
+            const pCont = document.getElementById('progressContainer');
+            const pBar = document.getElementById('progressBar');
+
+            const ref = storage.ref('meus_arquivos/' + Date.now() + "_" + file.name);
             const task = ref.put(file);
-            
-            document.getElementById('progressContainer').classList.remove('hidden');
+
+            btn.disabled = true;
+            pCont.classList.remove('hidden');
 
             task.on('state_changed', 
-                (s) => { 
-                    const p = (s.bytesTransferred / s.totalBytes) * 100;
-                    document.getElementById('progressBar').style.width = p + '%';
+                (s) => {
+                    const progress = (s.bytesTransferred / s.totalBytes) * 100;
+                    pBar.style.width = progress + '%';
                 },
-                (err) => alert(err.message),
+                (err) => { alert("Erro: " + err.message); btn.disabled = false; },
                 () => {
                     task.snapshot.ref.getDownloadURL().then(url => {
-                        db.files.unshift({ name: file.name, date: new Date().toISOString().split('T')[0], url: url });
+                        db.files.unshift({ name: file.name, date: new Date().toLocaleDateString('pt-BR'), url: url });
                         saveDB();
-                        document.getElementById('progressContainer').classList.add('hidden');
+                        pCont.classList.add('hidden');
+                        btn.disabled = false;
                         renderFiles();
                     });
                 }
@@ -194,33 +188,30 @@
             const list = document.getElementById('file-list');
             const dF = document.getElementById('filter-date-files').value;
             list.innerHTML = '';
-            db.files.filter(f => !dF || f.date === dF).forEach((f, i) => {
-                list.innerHTML += `<div class="bg-white p-4 rounded-3xl border shadow-sm flex justify-between items-center">
-                    <div class="truncate pr-2">
-                        <p class="font-bold text-sm truncate text-slate-800">${f.name}</p>
-                        <p class="text-[9px] font-black text-slate-400">${f.date}</p>
-                    </div>
+            db.files.forEach((f, i) => {
+                list.innerHTML += `<div class="bg-white p-5 rounded-[30px] shadow-sm flex justify-between items-center border border-white">
+                    <div class="truncate pr-2"><p class="font-bold text-sm truncate text-slate-800">${f.name}</p><p class="text-[9px] font-black text-slate-300 uppercase">${f.date}</p></div>
                     <div class="flex gap-2">
-                        <a href="${f.url}" target="_blank" class="bg-blue-50 text-blue-600 p-2 px-4 rounded-2xl text-[10px] font-black">ABRIR</a>
-                        <button onclick="db.files.splice(${i},1);saveDB();renderFiles()" class="text-red-300 font-bold p-2">×</button>
+                        <a href="${f.url}" target="_blank" class="bg-blue-50 text-blue-600 p-3 rounded-2xl text-[10px] font-black">ABRIR</a>
+                        <button onclick="db.files.splice(${i},1);saveDB();renderFiles()" class="text-red-200 hover:text-red-500 font-bold px-2">×</button>
                     </div>
                 </div>`;
             });
         }
 
-        // CRONOGRAMA
+        // TAREFAS
         function addSchedule() {
-            const t = prompt("Atividade:");
-            if(t) { db.tasks.push({ text: t, done: false }); saveDB(); renderTasks(); }
+            const t = prompt("O que fazer?");
+            if (t) { db.tasks.push({ text: t, done: false }); saveDB(); renderTasks(); }
         }
 
         function renderTasks() {
             const list = document.getElementById('schedule-list');
             list.innerHTML = '';
             db.tasks.forEach((t, i) => {
-                list.innerHTML += `<div class="bg-white p-5 rounded-2xl border flex justify-between items-center shadow-sm">
+                list.innerHTML += `<div class="bg-white p-5 rounded-[25px] flex justify-between items-center shadow-sm">
                     <label class="flex items-center gap-4 cursor-pointer flex-1">
-                        <input type="checkbox" ${t.done?'checked':''} onchange="db.tasks[${i}].done = this.checked; saveDB(); renderTasks()" class="w-6 h-6 rounded-full border-slate-300 accent-blue-600">
+                        <input type="checkbox" ${t.done?'checked':''} onchange="db.tasks[${i}].done = this.checked; saveDB(); renderTasks()" class="w-6 h-6 accent-blue-600">
                         <span class="font-bold text-lg ${t.done?'done-text text-slate-300':'text-slate-700'}">${t.text}</span>
                     </label>
                     <button onclick="db.tasks.splice(${i},1);saveDB();renderTasks()" class="text-red-300 font-bold text-xl px-2">×</button>
@@ -229,17 +220,17 @@
         }
 
         function saveDayPerformance() {
-            if(db.tasks.length === 0) return alert("Sem tarefas!");
+            if (db.tasks.length === 0) return;
             const done = db.tasks.filter(t => t.done).length;
             const eff = Math.round((done / db.tasks.length) * 100);
             db.history.unshift({ date: new Date().toLocaleDateString('pt-BR'), total: db.tasks.length, done, perc: eff, items: [...db.tasks] });
-            db.tasks = []; saveDB(); renderAll(); alert("Dia finalizado!");
+            db.tasks = []; saveDB(); renderAll(); alert("Dia Salvo!");
         }
 
         // NOTAS
         function addNote() {
             const n = prompt("Sua nota:");
-            if(n) { db.notes.unshift({ text: n, date: new Date().toISOString().split('T')[0] }); saveDB(); renderNotes(); }
+            if (n) { db.notes.unshift({ text: n, date: new Date().toLocaleDateString('pt-BR') }); saveDB(); renderNotes(); }
         }
 
         function renderNotes() {
@@ -247,9 +238,9 @@
             const list = document.getElementById('notes-list');
             list.innerHTML = '';
             db.notes.filter(n => n.text.toLowerCase().includes(s)).forEach((n, i) => {
-                list.innerHTML += `<div class="bg-white p-6 rounded-[32px] border shadow-sm relative group">
-                    <p class="text-slate-700 font-medium leading-relaxed">${n.text}</p>
-                    <div class="mt-4 flex justify-between items-center border-t pt-3">
+                list.innerHTML += `<div class="bg-white p-7 rounded-[35px] shadow-sm relative group">
+                    <p class="text-slate-700 font-semibold leading-relaxed">${n.text}</p>
+                    <div class="mt-5 flex justify-between items-center border-t pt-4">
                         <span class="text-[10px] font-black text-slate-300 uppercase">${n.date}</span>
                         <button onclick="db.notes.splice(${i},1);saveDB();renderNotes()" class="text-red-400 font-bold text-xs">Excluir</button>
                     </div>
@@ -257,25 +248,25 @@
             });
         }
 
-        // RELATÓRIOS
+        // DASHBOARD
         function renderHistory() {
             const list = document.getElementById('monthly-history');
-            let tA = 0, tP = 0; list.innerHTML = '';
+            let tD = 0, tP = 0; list.innerHTML = '';
             db.history.forEach((h, i) => {
-                tA += h.total; tP += h.perc;
-                list.innerHTML += `<div onclick="reviewDay(${i})" class="bg-white p-5 rounded-3xl border-l-8 border-l-blue-600 shadow-sm flex justify-between items-center active:bg-slate-50">
-                    <div><span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${h.date}</span><h4 class="font-black text-slate-700 text-lg">${h.done}/${h.total} OK</h4></div>
-                    <div class="text-right"><span class="text-2xl font-black text-blue-600">${h.perc}%</span></div>
+                tD += h.done; tP += h.perc;
+                list.innerHTML += `<div onclick="reviewDay(${i})" class="bg-white p-6 rounded-[30px] border-l-[10px] border-l-blue-600 shadow-sm flex justify-between items-center active:scale-95 transition-all">
+                    <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${h.date}</p><h4 class="font-black text-slate-800 text-lg">${h.done}/${h.total} Concluídas</h4></div>
+                    <div class="text-right"><span class="text-3xl font-black text-blue-600">${h.perc}%</span></div>
                 </div>`;
             });
-            document.getElementById('dash-total').innerText = tA;
+            document.getElementById('dash-total').innerText = tD;
             document.getElementById('dash-avg').innerText = db.history.length > 0 ? Math.round(tP / db.history.length) + "%" : "0%";
         }
 
         function reviewDay(i) {
             const day = db.history[i];
             document.getElementById('modal-title').innerText = day.date;
-            document.getElementById('modal-content').innerHTML = day.items.map(it => `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between text-base font-bold"><span class="${it.done?'text-green-600':'text-red-400'}">${it.text}</span><span>${it.done?'✔':'✘'}</span></div>`).join('');
+            document.getElementById('modal-content').innerHTML = day.items.map(it => `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between font-bold shadow-inner mb-2"><span class="${it.done?'text-green-600':'text-red-400'}">${it.text}</span><span>${it.done?'✔':'✘'}</span></div>`).join('');
             document.getElementById('modal-review').classList.remove('hidden');
         }
 
