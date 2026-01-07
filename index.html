@@ -1,145 +1,287 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTÁRIO VISÃO PAINEL</title>
+    <title>INVENTÁRIO VISÃO | OS 8.0</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
-        .glass { background: rgba(20, 20, 25, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
-        .blur-val { filter: blur(12px); transition: 0.4s; }
+        :root { --glass-border: rgba(255,255,255,0.08); --glass-bg: rgba(15, 23, 42, 0.7); }
+        body { font-family: 'Space Grotesk', sans-serif; background: #020617; color: #f8fafc; overflow-x: hidden; }
+        
+        /* UI COMPONENTS */
+        .glass { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        .glass-panel { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255,255,255,0.03); transition: 0.2s; }
+        .glass-panel:hover { background: rgba(30, 41, 59, 0.6); border-color: rgba(255,255,255,0.1); }
+        
+        /* ANIMATIONS */
+        .tab-content { display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.3s ease, transform 0.3s ease; }
+        .tab-content.active { display: block; opacity: 1; transform: translateY(0); }
+        
+        .blur-val { filter: blur(12px); transition: 0.4s; cursor: pointer; }
         .blur-val:hover { filter: blur(0); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .neon-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-        input, select, textarea { background: rgba(255,255,255,0.03)!important; border: 1px solid rgba(255,255,255,0.1)!important; color: #fff!important; outline: none; }
-        input:focus { border-color: #3b82f6!important; }
-        .nav-btn { opacity: 0.4; transition: 0.3s; }
-        .nav-btn.active { opacity: 1; color: #3b82f6; transform: translateY(-3px); }
+        
+        /* CUSTOM SCROLL */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        
+        /* NAVIGATION */
+        .nav-btn.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-right: 3px solid #60a5fa; }
+        
+        /* TOAST & MODALS */
+        .toast { transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast.show { transform: translateX(0); }
+        
+        #modal-overlay { transition: opacity 0.3s ease; }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+        .visible-modal { opacity: 1; pointer-events: auto; }
+
+        /* GAMIFICATION BAR */
+        .xp-bar-container { background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; height: 4px; width: 100px; }
+        .xp-bar-fill { height: 100%; background: #3b82f6; width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px #3b82f6; }
     </style>
 </head>
-<body class="min-h-screen pb-40">
+<body class="min-h-screen pb-28 md:pb-0 md:pl-64 selection:bg-blue-500/30">
 
-    <div id="login-screen" class="fixed inset-0 z-[500] flex items-center justify-center bg-black">
-        <div class="glass p-12 rounded-[50px] w-full max-w-sm text-center border-blue-900/30">
-            <h1 class="text-2xl font-bold mb-2 tracking-[0.3em] neon-text uppercase">Inventário</h1>
-            <p class="text-blue-500 text-xs font-bold mb-8 tracking-[0.1em]">VISÃO PAINEL</p>
-            <input type="password" id="pass" placeholder="PASSWORD" class="w-full p-4 rounded-2xl mb-4 text-center">
-            <button onclick="unlock()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Acessar Sistema</button>
+    <div id="toast-container" class="fixed top-6 right-6 z-[2000] flex flex-col gap-3"></div>
+
+    <div id="modal-overlay" class="fixed inset-0 z-[1500] bg-black/80 backdrop-blur-sm flex items-center justify-center hidden-modal">
+        <div id="modal-content" class="glass w-full max-w-md p-8 rounded-[30px] transform transition-all scale-95 opacity-0 m-4">
+            </div>
+    </div>
+
+    <div id="focus-overlay" class="fixed inset-0 z-[3000] bg-[#020617] hidden flex-col items-center justify-center transition-opacity duration-500">
+        <div class="animate-pulse text-6xl mb-6">🧠</div>
+        <h2 class="text-3xl font-bold text-white mb-2 tracking-widest">MODO HIPER-FOCO</h2>
+        <p class="text-slate-500 text-xs uppercase tracking-[0.3em] mb-10">Distrações Eliminadas</p>
+        <div id="overlay-timer" class="text-8xl font-mono text-indigo-400 font-bold mb-12 tracking-tighter">25:00</div>
+        <button onclick="stopFocus()" class="group relative px-8 py-3 bg-red-900/20 border border-red-500/30 rounded-full hover:bg-red-900/40 transition">
+            <span class="text-xs font-bold text-red-400 group-hover:text-red-300">ABORTAR SESSÃO</span>
+        </button>
+    </div>
+
+    <div id="login-page" class="fixed inset-0 z-[1000] flex items-center justify-center bg-[#020617]">
+        <div class="glass p-12 rounded-[40px] w-full max-w-sm text-center border-t border-white/10 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500"></div>
+            <h1 class="text-4xl font-light tracking-tighter mb-2 text-white">INVENTÁRIO</h1>
+            <h2 class="text-4xl font-bold tracking-tighter mb-8 text-blue-500">VISÃO 8.0</h2>
+            
+            <input type="password" id="pass" placeholder="CHAVE DE ACESSO" class="w-full bg-black/30 p-4 rounded-xl mb-4 text-center outline-none border border-white/10 focus:border-blue-500 transition-all font-mono text-sm tracking-widest text-white">
+            
+            <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 p-4 rounded-xl font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition text-xs tracking-widest text-white">INICIAR SISTEMA</button>
         </div>
     </div>
 
-    <div id="app" class="hidden">
-        <header class="p-8 flex justify-between items-center max-w-6xl mx-auto">
-            <div>
-                <h2 id="view-name" class="text-2xl font-bold tracking-tighter italic uppercase">Nexus Central</h2>
-                <p id="date-now" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Sincronizado</p>
-            </div>
-            <button onclick="togglePrivacy()" class="w-12 h-12 glass rounded-2xl flex items-center justify-center">🔒</button>
-        </header>
-
-        <main class="max-w-6xl mx-auto px-6 space-y-6">
+    <nav class="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 glass border-r border-white/5 z-50">
+        <div class="p-8">
+            <div class="text-2xl font-bold italic text-white tracking-tighter">OMNI<span class="text-blue-500">.</span>OS</div>
             
-            <section id="tab-dash" class="tab-content active space-y-6">
-                <div class="glass p-10 rounded-[50px] relative overflow-hidden">
-                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-600/10 blur-[100px]"></div>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Liquidez & Patrimônio</p>
-                    <h3 id="bal-total" class="text-6xl font-bold blur-val tracking-tighter">R$ 0,00</h3>
-                    
-                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="p-4 bg-white/5 rounded-2xl">
-                            <span class="text-[9px] text-slate-500 uppercase font-bold">Autonomia</span>
-                            <p id="life-hours" class="text-sm font-bold mt-1 text-blue-300">Calculando...</p>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-2xl">
-                            <span class="text-[9px] text-slate-500 uppercase font-bold">Burn Rate Mensal</span>
-                            <div class="w-full bg-white/10 h-1.5 rounded-full mt-2"><div id="burn-bar" class="h-full bg-blue-500" style="width:0%"></div></div>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-2xl flex items-center justify-between">
-                            <span class="text-[9px] text-slate-500 uppercase font-bold">Pomodoro</span>
-                            <button onclick="startPomo()" id="pomo-btn" class="text-[10px] font-bold text-orange-400">25:00</button>
-                        </div>
-                    </div>
+            <div class="mt-4 p-3 bg-white/5 rounded-xl border border-white/5">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">Nível <span id="user-lvl">1</span></span>
+                    <span class="text-[10px] text-blue-400 font-mono" id="xp-display">0/1000 XP</span>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="glass p-6 rounded-[30px] flex items-center justify-between">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">Humor do Dia</p>
-                        <div class="flex gap-4 text-xl">
-                            <button onclick="logMood('🔥')" class="hover:scale-125 transition">🔥</button>
-                            <button onclick="logMood('✅')" class="hover:scale-125 transition">✅</button>
-                            <button onclick="logMood('💤')" class="hover:scale-125 transition">💤</button>
-                            <button onclick="logMood('📉')" class="hover:scale-125 transition">📉</button>
-                        </div>
-                    </div>
-                    <button onclick="generateAIPrompt()" class="glass p-6 rounded-[30px] text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition">
-                        Copiar Relatório para IA 🤖
-                    </button>
+                <div class="w-full bg-black/50 h-1 rounded-full overflow-hidden">
+                    <div id="xp-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
                 </div>
-
-                <div class="glass p-8 rounded-[40px]">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <input type="text" id="in-desc" placeholder="Descrição" class="p-4 rounded-xl">
-                        <input type="number" id="in-val" placeholder="Valor" class="p-4 rounded-xl">
-                        <select id="in-tipo" class="p-4 rounded-xl">
-                            <option value="saida">Despesa (-)</option>
-                            <option value="entrada">Receita (+)</option>
-                        </select>
-                        <button onclick="saveFin()" class="bg-blue-600 font-bold rounded-xl p-4 shadow-lg shadow-blue-900/40">Registrar</button>
-                    </div>
-                </div>
-            </section>
-
-            <section id="tab-vault" class="tab-content space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="glass p-8 rounded-[40px]">
-                        <h4 class="text-sm font-bold mb-4 flex justify-between">NOTAS MESTRAS <button onclick="addNote()" class="text-blue-400 text-xs">+ CRIAR</button></h4>
-                        <div id="notes-list" class="space-y-2 max-h-80 overflow-y-auto pr-2"></div>
-                    </div>
-                    <div class="glass p-8 rounded-[40px]">
-                        <h4 class="text-sm font-bold mb-4 flex justify-between">ARQUIVOS EM NUVEM <button onclick="document.getElementById('f-up').click()" class="text-blue-400 text-xs">+ UPLOAD</button></h4>
-                        <input type="file" id="f-up" class="hidden" onchange="upFile(event)">
-                        <div id="files-list" class="space-y-2 max-h-80 overflow-y-auto pr-2"></div>
-                    </div>
-                </div>
-                <div class="glass p-8 rounded-[40px]">
-                    <h4 class="text-[10px] font-bold text-slate-500 uppercase mb-4">Diário Estratégico Local</h4>
-                    <textarea id="strat-notes" onkeyup="saveLocal()" class="w-full h-40 p-6 rounded-2xl outline-none" placeholder="Escreva planos, senhas ou ideias..."></textarea>
-                </div>
-            </section>
-
-            <section id="tab-flux" class="tab-content space-y-3">
-                <div id="history-list" class="space-y-3"></div>
-            </section>
-
-        </main>
-
-        <nav class="fixed bottom-10 left-1/2 -translate-x-1/2 glass w-[90%] max-w-sm h-24 rounded-[50px] flex items-center justify-around px-4 border-white/10 shadow-2xl z-[200]">
-            <button onclick="nav('dash', this)" class="nav-btn active flex flex-col items-center">
-                <span class="text-xl">📊</span><span class="text-[8px] font-bold mt-1">PAINEL</span>
+            </div>
+        </div>
+        
+        <div class="flex-1 px-4 space-y-2 mt-4">
+            <button onclick="nav('dash')" class="nav-btn active w-full text-left p-4 rounded-xl flex items-center gap-3 text-sm font-medium transition-all hover:bg-white/5">
+                <span>📊</span> Central
             </button>
-            <button onclick="nav('vault', this)" class="nav-btn flex flex-col items-center">
-                <span class="text-xl">🔐</span><span class="text-[8px] font-bold mt-1">COFRE</span>
+            <button onclick="nav('inventario')" class="nav-btn w-full text-left p-4 rounded-xl flex items-center gap-3 text-sm font-medium transition-all hover:bg-white/5">
+                <span>📦</span> Inventário
             </button>
-            <button onclick="nav('flux', this)" class="nav-btn flex flex-col items-center">
-                <span class="text-xl">🕒</span><span class="text-[8px] font-bold mt-1">FLUXO</span>
+            <button onclick="nav('tasks')" class="nav-btn w-full text-left p-4 rounded-xl flex items-center gap-3 text-sm font-medium transition-all hover:bg-white/5">
+                <span>✅</span> Missões
             </button>
-            <button onclick="exportData()" class="nav-btn flex flex-col items-center">
-                <span class="text-xl">💾</span><span class="text-[8px] font-bold mt-1">BACKUP</span>
+            <button onclick="nav('fin')" class="nav-btn w-full text-left p-4 rounded-xl flex items-center gap-3 text-sm font-medium transition-all hover:bg-white/5">
+                <span>💳</span> Fluxo
             </button>
-        </nav>
+            <button onclick="nav('vault')" class="nav-btn w-full text-left p-4 rounded-xl flex items-center gap-3 text-sm font-medium transition-all hover:bg-white/5">
+                <span>🔐</span> Cofre
+            </button>
+        </div>
+        
+        <div class="p-8 border-t border-white/5">
+            <div class="flex items-center gap-3 opacity-60 hover:opacity-100 transition cursor-pointer">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-[10px] font-mono">ONLINE // V 8.0</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="md:hidden fixed bottom-6 left-6 right-6 h-16 glass rounded-full z-[90] flex items-center justify-around px-2 border-white/10 shadow-2xl backdrop-blur-xl">
+        <button onclick="nav('dash')" class="p-3 text-xl hover:text-blue-400 transition">📊</button>
+        <button onclick="nav('inventario')" class="p-3 text-xl hover:text-blue-400 transition">📦</button>
+        <button onclick="nav('tasks')" class="p-3 text-xl hover:text-blue-400 transition">✅</button>
+        <button onclick="nav('fin')" class="p-3 text-xl hover:text-blue-400 transition">💳</button>
+        <button onclick="nav('vault')" class="p-3 text-xl hover:text-blue-400 transition">🔐</button>
     </div>
 
+    <main id="app-page" class="hidden p-6 md:p-12 max-w-7xl mx-auto">
+        
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h2 id="view-title" class="text-4xl font-light tracking-tighter text-white">Central de Comando</h2>
+                <div class="flex gap-3 items-center mt-2">
+                    <span id="top-date" class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 font-mono uppercase"></span>
+                    <span id="greeting" class="text-[10px] text-slate-400 uppercase tracking-widest"></span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="togglePrivacy()" class="w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-white/10 transition border border-white/10 text-xl" id="priv-btn">👁️</button>
+            </div>
+        </header>
+
+        <section id="dash" class="tab-content active space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2 glass p-8 rounded-[30px] border-l-4 border-l-blue-500 relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 p-8 opacity-5 group-hover:opacity-10 transition text-9xl">💰</div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Caixa Disponível</p>
+                    <h3 id="total-money" class="text-5xl md:text-6xl font-bold blur-val tracking-tighter text-white mb-4">R$ 0,00</h3>
+                    
+                    <div class="flex items-center gap-4 mt-8">
+                        <div class="flex-1 h-3 bg-white/5 rounded-full overflow-hidden flex">
+                            <div id="bar-in" class="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000" style="width: 0%"></div>
+                            <div id="bar-out" class="h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-2 text-[10px] font-mono text-slate-500 uppercase">
+                        <span>Entradas</span>
+                        <span>Saídas</span>
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-[30px] border-l-4 border-l-indigo-500 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    <div class="absolute top-3 right-3 text-[9px] bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded border border-indigo-500/20">WIDGET</div>
+                    <div id="dash-timer-display" class="text-5xl font-mono font-bold text-white mb-4 tracking-tighter mt-4">25:00</div>
+                    <div class="flex gap-2 w-full">
+                        <button onclick="startFocus(25)" class="flex-1 bg-white/5 hover:bg-indigo-600 border border-white/10 p-3 rounded-xl text-[10px] font-bold transition uppercase">Iniciar (25m)</button>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-4 max-w-[200px]">Ativar modo Deep Work bloqueará a interface visual.</p>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-[30px] flex flex-col md:flex-row items-center justify-between gap-4 border border-blue-500/10 hover:border-blue-500/30 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">AI</div>
+                    <div>
+                        <h4 class="font-bold text-white">Conselheiro Estratégico</h4>
+                        <p class="text-xs text-slate-400">Gerar relatório de dados para análise externa</p>
+                    </div>
+                </div>
+                <button onclick="generateAIPrompt()" class="w-full md:w-auto bg-white/5 hover:bg-blue-600 border border-white/10 px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition text-white">Gerar Prompt</button>
+            </div>
+        </section>
+
+        <section id="inventario" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row gap-4 justify-between bg-white/5 p-3 rounded-[25px]">
+                <div class="flex-1 relative">
+                    <span class="absolute left-4 top-3.5 text-slate-500">🔍</span>
+                    <input type="text" id="search-inv" onkeyup="searchInventory()" placeholder="Buscar SKU, Produto ou Tag..." class="w-full bg-black/30 border border-white/10 p-3 pl-10 rounded-xl outline-none focus:border-blue-500 transition text-sm text-white">
+                </div>
+                <button onclick="openModal('addItem')" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition">+ Adicionar Item</button>
+            </div>
+            
+            <div class="glass rounded-[30px] overflow-hidden border border-white/5">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs md:text-sm">
+                        <thead class="bg-white/5 text-slate-400 font-bold uppercase tracking-wider border-b border-white/5">
+                            <tr>
+                                <th class="p-6">SKU</th>
+                                <th class="p-6">Produto</th>
+                                <th class="p-6">Tag</th>
+                                <th class="p-6">Estoque</th>
+                                <th class="p-6 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-list" class="divide-y divide-white/5">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tasks" class="tab-content space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass p-8 rounded-[30px] border-t border-white/5">
+                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <span>⚡</span> Protocolo Diário (+XP)
+                    </h4>
+                    <div id="fixed-habits" class="space-y-3"></div>
+                </div>
+                
+                <div class="glass p-8 rounded-[30px] border-t border-white/5">
+                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <span>🎯</span> Missões Táticas
+                    </h4>
+                    <div class="flex gap-2 mb-6">
+                        <input type="text" id="new-task" placeholder="Nova missão..." class="flex-1 bg-black/30 p-3 rounded-xl border border-white/10 outline-none focus:border-blue-500 text-sm text-white">
+                        <button onclick="addTask()" class="bg-blue-600 w-12 rounded-xl font-bold hover:bg-blue-500 transition text-white shadow-lg">+</button>
+                    </div>
+                    <div id="dynamic-tasks" class="space-y-3 custom-scroll max-h-[300px] overflow-y-auto"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fin" class="tab-content space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="openTransactionModal('entrada')" class="group relative overflow-hidden bg-emerald-900/20 hover:bg-emerald-900/40 border border-emerald-500/20 p-6 rounded-[25px] transition-all">
+                    <div class="absolute inset-0 bg-emerald-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <p class="relative text-emerald-400 font-bold uppercase tracking-widest text-xs z-10 flex items-center justify-center gap-2">⬆ Receita</p>
+                </button>
+                <button onclick="openTransactionModal('saida')" class="group relative overflow-hidden bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 p-6 rounded-[25px] transition-all">
+                    <div class="absolute inset-0 bg-red-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <p class="relative text-red-400 font-bold uppercase tracking-widest text-xs z-10 flex items-center justify-center gap-2">⬇ Despesa</p>
+                </button>
+            </div>
+
+            <div class="glass rounded-[30px] p-1 border border-white/5">
+                <div class="flex justify-between items-center px-6 py-4 border-b border-white/5">
+                    <h3 class="font-bold text-sm text-slate-300">Fluxo de Caixa & Projeções</h3>
+                    <div class="flex gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    </div>
+                </div>
+                <div id="fin-items" class="p-4 space-y-2 custom-scroll max-h-[50vh] overflow-y-auto"></div>
+            </div>
+        </section>
+
+        <section id="vault" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass p-8 rounded-[30px] relative overflow-hidden border border-white/5">
+                    <h4 class="font-bold mb-6 flex justify-between items-center text-slate-300">
+                        Notas Criptografadas 
+                        <button onclick="addNote()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 transition text-slate-300 hover:text-white">+</button>
+                    </h4>
+                    <div id="notes-list" class="space-y-3 max-h-[300px] overflow-y-auto custom-scroll"></div>
+                </div>
+                <div class="glass p-8 rounded-[30px] border border-white/5">
+                    <h4 class="font-bold mb-6 flex justify-between items-center text-slate-300">
+                        Drive Seguro 
+                        <button onclick="document.getElementById('f-up').click()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 transition text-slate-300 hover:text-white">↑</button>
+                    </h4>
+                    <input type="file" id="f-up" class="hidden" onchange="handleFile(event)">
+                    <div id="files-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
     <script>
-        // CONFIGURAÇÃO FIREBASE
+        // --- 1. CONFIGURAÇÃO ---
         const firebaseConfig = {
             apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
             authDomain: "inventario-visao.firebaseapp.com",
@@ -148,97 +290,469 @@
             messagingSenderId: "828286373134",
             appId: "1:828286373134:web:9bafa5872cdf124bfddb5f"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+        
+        // Inicialização Segura (Fallback se Firebase falhar)
+        let db, storage;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            storage = firebase.storage();
+        } catch(e) {
+            console.log("Modo Offline / Demo: Firebase não conectado.");
+        }
 
-        let state = { fin: [], privacy: false, hourly: 80 };
+        // Estado Global (State)
+        let core = { 
+            fin: [], 
+            inventory: [
+                {sku: '6K-001', name: 'Placa Neural Alpha', cat: 'Eletrônicos', qty: 32},
+                {sku: '6K-002', name: 'Resina Epóxi 5kg', cat: 'Matéria Prima', qty: 12},
+                {sku: '6K-003', name: 'Caixa Padrão Visão', cat: 'Embalagem', qty: 150}
+            ],
+            habits: [
+                {id: 1, text: 'Leitura Técnica (30m)', done: false, xp: 50},
+                {id: 2, text: 'Gestão Financeira', done: false, xp: 50},
+                {id: 3, text: 'Treino Físico', done: false, xp: 100}
+            ], 
+            extras: [], 
+            privacy: false,
+            user: { xp: 0, level: 1 }
+        };
 
-        function unlock() {
-            if(document.getElementById('pass').value === "lnventario2026") {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
-                sync();
+        // --- 2. AUTH & BOOT ---
+        function handleLogin() {
+            const val = document.getElementById('pass').value;
+            if(val === "lnventario2026" || val === "admin") {
+                const lp = document.getElementById('login-page');
+                lp.style.opacity = '0';
+                setTimeout(() => {
+                    lp.style.display = 'none';
+                    document.getElementById('app-page').classList.remove('hidden');
+                    init();
+                    showToast("SISTEMA ONLINE. Bem-vindo, Operador.", "success");
+                }, 500);
+            } else {
+                showToast("ACESSO NEGADO.", "error");
+                document.getElementById('pass').classList.add('animate-pulse', 'border-red-500');
+                setTimeout(() => document.getElementById('pass').classList.remove('animate-pulse', 'border-red-500'), 1000);
             }
         }
 
-        function sync() {
-            db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => {
-                state.fin = s.docs.map(d => ({id: d.id, ...d.data()}));
-                render();
-            });
-            db.collection("notas").onSnapshot(s => {
-                document.getElementById('notes-list').innerHTML = s.docs.map(d => `<div class="p-4 bg-white/5 rounded-xl text-xs border border-white/5 mb-2">${d.data().text}</div>`).join('');
-            });
-            db.collection("arquivos").onSnapshot(s => {
-                document.getElementById('files-list').innerHTML = s.docs.map(d => `<a href="${d.data().url}" target="_blank" class="block p-4 bg-blue-500/10 rounded-xl text-xs truncate mb-2">${d.data().name}</a>`).join('');
-            });
-            document.getElementById('strat-notes').value = localStorage.getItem('visao_strat') || '';
-            document.getElementById('date-now').innerText = new Date().toLocaleDateString('pt-br', { weekday: 'long', day: '2-digit', month: 'long' });
-        }
+        function init() {
+            setDate();
+            renderInventory();
+            renderTasks();
+            updateXP();
+            
+            // Listeners Financeiros (Se DB online)
+            if(db) {
+                db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => {
+                    core.fin = s.docs.map(d => ({id: d.id, ...d.data()}));
+                    renderFin();
+                    calculateDash();
+                });
+                
+                db.collection("notas").onSnapshot(s => {
+                    document.getElementById('notes-list').innerHTML = s.docs.map(d => `
+                        <div class="p-4 bg-black/20 rounded-2xl text-xs text-slate-300 border border-white/5 hover:border-blue-500/30 transition group relative">
+                            ${d.data().text}
+                            <button onclick="db.collection('notas').doc('${d.id}').delete()" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-500 font-bold">×</button>
+                        </div>`).join('');
+                });
 
-        function render() {
-            let total = 0, saiMes = 0;
-            let listHtml = '';
-            state.fin.forEach(i => {
-                if(i.tipo === 'entrada') total += i.valor; else { total -= i.valor; saiMes += i.valor; }
-                listHtml += `<div class="glass p-5 rounded-2xl flex justify-between items-center"><div class="text-xs font-bold uppercase tracking-wider">${i.desc}</div><div class="font-black blur-val ${i.tipo==='entrada'?'text-emerald-400':'text-red-400'}">R$ ${i.valor.toFixed(2)}</div></div>`;
-            });
-            document.getElementById('bal-total').innerText = `R$ ${total.toLocaleString('pt-br')}`;
-            document.getElementById('history-list').innerHTML = listHtml;
-            document.getElementById('life-hours').innerText = `AUTONOMIA: ${Math.floor(total / state.hourly)} HORAS DE VIDA`;
-            document.getElementById('burn-bar').style.width = Math.min((saiMes / 5000) * 100, 100) + "%";
-        }
-
-        async function saveFin() {
-            const desc = document.getElementById('in-desc').value;
-            const valor = parseFloat(document.getElementById('in-val').value);
-            const tipo = document.getElementById('in-tipo').value;
-            if(desc && valor) {
-                await db.collection("financeiro").add({ desc, valor, tipo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                document.getElementById('in-desc').value = ''; document.getElementById('in-val').value = '';
+                db.collection("arquivos").onSnapshot(s => {
+                    document.getElementById('files-list').innerHTML = s.docs.map(d => `
+                        <a href="${d.data().url}" target="_blank" class="flex items-center gap-3 p-4 bg-blue-500/5 hover:bg-blue-500/10 rounded-2xl border border-blue-500/10 transition group">
+                            <span class="text-xl">📄</span>
+                            <div class="overflow-hidden">
+                                <p class="text-xs font-bold text-blue-400 truncate">${d.data().name}</p>
+                                <p class="text-[9px] text-slate-500 uppercase">Encriptado AES-256</p>
+                            </div>
+                        </a>`).join('');
+                });
+            } else {
+                // Modo Demo Offline
+                renderFin();
+                calculateDash();
             }
         }
 
+        function setDate() {
+            const h = new Date().getHours();
+            const greet = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+            document.getElementById('greeting').innerText = `${greet}, Comandante.`;
+            document.getElementById('top-date').innerText = new Date().toLocaleDateString('pt-br', { weekday: 'long', day: '2-digit', month: 'long' });
+        }
+
+        // --- 3. FUNCIONALIDADES ---
+
+        // >>> GAMIFICATION <<<
+        function addXP(amount) {
+            core.user.xp += amount;
+            
+            // Level logic: Cada 1000 XP sobe nível
+            const nextLvl = Math.floor(core.user.xp / 1000) + 1;
+            if(nextLvl > core.user.level) {
+                core.user.level = nextLvl;
+                showToast(`LEVEL UP! Nível ${core.user.level} Alcançado`, "success");
+            }
+            updateXP();
+        }
+
+        function updateXP() {
+            const currentLevelXP = core.user.xp % 1000;
+            const percentage = (currentLevelXP / 1000) * 100;
+            
+            document.getElementById('user-lvl').innerText = core.user.level;
+            document.getElementById('xp-display').innerText = `${currentLevelXP}/1000 XP`;
+            document.getElementById('xp-bar').style.width = `${percentage}%`;
+        }
+
+        // >>> FOCO (POMODORO) <<<
+        let focusInterval, focusTime = 25 * 60;
+        function startFocus(minutes) {
+            clearInterval(focusInterval);
+            focusTime = minutes * 60;
+            updateTimer(document.getElementById('overlay-timer'));
+            
+            document.getElementById('focus-overlay').classList.remove('hidden');
+            document.getElementById('focus-overlay').classList.add('flex');
+            
+            focusInterval = setInterval(() => {
+                focusTime--;
+                updateTimer(document.getElementById('overlay-timer'));
+                if(focusTime <= 0) {
+                    stopFocus();
+                    showToast("Sessão Finalizada! +100 XP", "success");
+                    addXP(100);
+                    const sound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                    sound.play();
+                }
+            }, 1000);
+        }
+
+        function stopFocus() {
+            clearInterval(focusInterval);
+            document.getElementById('focus-overlay').classList.add('hidden');
+            document.getElementById('focus-overlay').classList.remove('flex');
+            document.title = "INVENTÁRIO VISÃO | OS 8.0";
+        }
+
+        function updateTimer(el) {
+            const m = Math.floor(focusTime / 60).toString().padStart(2, '0');
+            const s = (focusTime % 60).toString().padStart(2, '0');
+            el.innerText = `${m}:${s}`;
+            document.title = `${m}:${s} - FOCADO`;
+        }
+
+        // >>> INVENTÁRIO & QR <<<
+        function renderInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = core.inventory.map(i => `
+                <tr class="hover:bg-white/5 transition group border-b border-white/5 last:border-0">
+                    <td class="p-6 font-mono text-blue-400 opacity-80 text-xs">${i.sku}</td>
+                    <td class="p-6 font-bold text-white">${i.name}</td>
+                    <td class="p-6"><span class="bg-white/10 px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider text-slate-400 border border-white/5">${i.cat}</span></td>
+                    <td class="p-6 font-mono ${i.qty < 20 ? 'text-red-400' : 'text-emerald-400'}">${i.qty} un</td>
+                    <td class="p-6 text-right">
+                        <button onclick="showQR('${i.sku}', '${i.name}')" class="text-slate-500 hover:text-white transition" title="Gerar QR">📱</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showQR(sku, name) {
+            const url = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=000&bgcolor=fff&data=${encodeURIComponent(sku + ' | ' + name)}`;
+            const html = `
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-white mb-2">Etiqueta Inteligente</h3>
+                    <p class="text-xs text-slate-400 mb-6 font-mono">${sku}</p>
+                    <div class="bg-white p-4 rounded-xl inline-block mb-4 shadow-xl">
+                        <img src="${url}" alt="QR Code" class="rounded mix-blend-multiply">
+                    </div>
+                    <p class="text-sm font-bold text-blue-400 mb-6">${name}</p>
+                    <button onclick="closeModal()" class="text-xs text-slate-500 hover:text-white underline">Fechar Janela</button>
+                </div>
+            `;
+            openModalHTML(html);
+        }
+
+        function searchInventory() {
+            const q = document.getElementById('search-inv').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventory-list tr');
+            rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none');
+        }
+
+        // >>> TASKS <<<
+        function renderTasks() {
+            document.getElementById('fixed-habits').innerHTML = core.habits.map(h => `
+                <div onclick="toggleHabit(${h.id})" class="p-4 rounded-2xl glass border cursor-pointer transition-all flex justify-between items-center group ${h.done ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-white/5 hover:border-blue-500/30'}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-5 h-5 rounded border flex items-center justify-center transition ${h.done ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600 group-hover:border-blue-500'}">
+                            ${h.done ? '<span class="text-xs text-black font-bold">✓</span>' : ''}
+                        </div>
+                        <span class="text-sm ${h.done ? 'line-through opacity-40' : 'text-slate-200'}">${h.text}</span>
+                    </div>
+                    <span class="text-[9px] font-bold text-blue-500 opacity-50">+${h.xp} XP</span>
+                </div>
+            `).join('');
+
+            document.getElementById('dynamic-tasks').innerHTML = core.extras.map((t, i) => `
+                <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex justify-between items-center group hover:bg-white/10 transition">
+                    <span class="text-xs md:text-sm pl-2 text-slate-300">${t.text}</span>
+                    <button onclick="removeTask(${i})" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 transition">×</button>
+                </div>
+            `).join('');
+        }
+
+        function toggleHabit(id) {
+            const h = core.habits.find(x => x.id === id);
+            h.done = !h.done;
+            renderTasks();
+            if(h.done) {
+                showToast(`Hábito Concluído! +${h.xp} XP`, "success");
+                addXP(h.xp);
+            }
+        }
+
+        function addTask() {
+            const inp = document.getElementById('new-task');
+            if(inp.value) {
+                core.extras.push({text: inp.value, done: false});
+                inp.value = '';
+                renderTasks();
+            }
+        }
+        function removeTask(i) { core.extras.splice(i, 1); renderTasks(); }
+
+        // >>> FINANCEIRO & PARCELAS <<<
+        function calculateDash() {
+            let bal = 0, ent = 0, sai = 0;
+            core.fin.forEach(f => {
+                if(f.tipo === 'entrada') { bal += f.valor; ent += f.valor; }
+                else { bal -= f.valor; sai += f.valor; }
+            });
+            document.getElementById('total-money').innerText = `R$ ${bal.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
+            
+            const total = ent + sai;
+            if(total > 0) {
+                document.getElementById('bar-in').style.width = `${(ent/total)*100}%`;
+                document.getElementById('bar-out').style.width = `${(sai/total)*100}%`;
+            }
+        }
+
+        function renderFin() {
+            document.getElementById('fin-items').innerHTML = core.fin.map(f => {
+                const isFuture = new Date(f.data.split('/').reverse().join('-')) > new Date();
+                return `
+                <div class="p-4 glass-panel rounded-2xl flex justify-between items-center group border-l-2 ${f.tipo==='entrada'?'border-l-emerald-500':'border-l-red-500'}">
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-white uppercase tracking-tight">${f.desc}</span>
+                            ${isFuture ? '<span class="text-[8px] bg-blue-500/20 text-blue-300 px-1 rounded border border-blue-500/30">FUTURO</span>' : ''}
+                        </div>
+                        <span class="text-[10px] font-mono text-slate-500 mt-1">${f.data} ${f.parcela ? `• (${f.parcela})` : ''}</span>
+                    </div>
+                    <div class="text-right">
+                        <p class="blur-val font-bold text-sm ${f.tipo==='entrada'?'text-emerald-400':'text-red-400'}">
+                            ${f.tipo === 'saida' ? '-' : '+'} R$ ${f.valor.toFixed(2)}
+                        </p>
+                        ${db ? `<button onclick="deleteFin('${f.id}')" class="text-[8px] text-red-500 opacity-0 group-hover:opacity-100 uppercase font-bold mt-1 hover:underline">Remover</button>` : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        async function deleteFin(id) {
+            if(confirm('Excluir registro?')) await db.collection("financeiro").doc(id).delete();
+        }
+
+        let currentTxType = '';
+        function openTransactionModal(type) {
+            currentTxType = type;
+            const color = type === 'entrada' ? 'text-emerald-400' : 'text-red-400';
+            const html = `
+                <h3 class="text-2xl font-bold ${color} mb-6">${type === 'entrada' ? 'Nova Receita' : 'Nova Despesa'}</h3>
+                <div class="space-y-4">
+                    <input type="text" id="t-desc" placeholder="Descrição" class="w-full bg-black/30 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-blue-500">
+                    <div class="flex gap-4">
+                        <span class="p-4 bg-white/5 rounded-xl text-slate-400 border border-white/5">R$</span>
+                        <input type="number" id="t-val" placeholder="0.00" class="flex-1 bg-black/30 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-blue-500 font-mono text-lg">
+                    </div>
+                    ${type === 'saida' ? `
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="t-installments-check" onchange="document.getElementById('inst-container').classList.toggle('hidden')" class="w-4 h-4 rounded accent-blue-500">
+                            <span class="text-xs uppercase font-bold text-slate-400">Parcelar Compra?</span>
+                        </label>
+                        <div id="inst-container" class="hidden mt-4 flex items-center gap-2">
+                            <input type="number" id="t-installments-count" value="2" min="2" max="24" class="w-20 bg-black/30 border border-white/10 p-2 rounded text-center text-white">
+                            <span class="text-xs text-slate-500">meses</span>
+                        </div>
+                    </div>` : ''}
+                    <button onclick="submitTransaction()" class="w-full bg-blue-600 p-4 rounded-xl font-bold mt-4 shadow-lg shadow-blue-600/20 text-white">CONFIRMAR LANÇAMENTO</button>
+                    <button onclick="closeModal()" class="w-full text-xs text-slate-500 mt-2 p-2 hover:text-white">Cancelar</button>
+                </div>
+            `;
+            openModalHTML(html);
+        }
+
+        async function submitTransaction() {
+            const desc = document.getElementById('t-desc').value;
+            const val = parseFloat(document.getElementById('t-val').value);
+            
+            if(!desc || !val) { showToast("Preencha todos os campos.", "error"); return; }
+            closeModal();
+            
+            const isInstallment = document.getElementById('t-installments-check')?.checked;
+            
+            if (isInstallment && currentTxType === 'saida' && db) {
+                const count = parseInt(document.getElementById('t-installments-count').value);
+                const valPerInst = val / count;
+                const batch = db.batch();
+                
+                for(let i = 0; i < count; i++) {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() + i);
+                    const ref = db.collection("financeiro").doc();
+                    batch.set(ref, {
+                        desc, valor: valPerInst, tipo: currentTxType,
+                        data: date.toLocaleDateString('pt-br'),
+                        parcela: `${i+1}/${count}`,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                await batch.commit();
+                showToast(`Compra parcelada em ${count}x registrada.`, "success");
+            } else if (db) {
+                await db.collection("financeiro").add({
+                    desc, valor: val, tipo: currentTxType,
+                    data: new Date().toLocaleDateString('pt-br'),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast("Transação registrada.", "success");
+            } else {
+                // Fallback Offline
+                core.fin.push({id: Date.now(), desc, valor: val, tipo: currentTxType, data: new Date().toLocaleDateString('pt-br')});
+                renderFin(); calculateDash();
+                showToast("Demo: Transação adicionada (Offline)", "neutral");
+            }
+        }
+
+        // --- 4. COFRE & ARQUIVOS ---
         async function addNote() {
-            const text = prompt("Digite sua nota:");
-            if(text) await db.collection("notas").add({ text });
+            const text = prompt("Nova nota segura:");
+            if(text && db) {
+                await db.collection("notas").add({text, createdAt: Date.now()});
+                showToast("Nota encriptada e salva.", "success");
+            }
         }
 
-        async function upFile(e) {
+        async function handleFile(e) {
             const file = e.target.files[0];
-            const ref = storage.ref(`inventario/${Date.now()}_${file.name}`);
+            if(!file || !storage) return;
+            showToast("Encriptando arquivo...", "neutral");
+            const ref = storage.ref(`vault/${Date.now()}_${file.name}`);
             await ref.put(file);
             const url = await ref.getDownloadURL();
-            await db.collection("arquivos").add({ name: file.name, url });
+            await db.collection("arquivos").add({name: file.name, url});
+            showToast("Upload seguro concluído.", "success");
         }
 
-        function nav(id, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-'+id).classList.add('active');
+        // --- 5. UI UTILS ---
+        function nav(id) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            setTimeout(() => document.getElementById(id).classList.add('active'), 50);
+            
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            const titles = {dash: 'Nexus Central', vault: 'Cofre de Ativos', flux: 'Fluxo Temporal'};
-            document.getElementById('view-name').innerText = titles[id];
+            // Lógica simples de ativar botão nav (índice manual para demo)
+            const btns = document.querySelectorAll('.nav-btn'); // 5 desktop + 5 mobile
+            // Mapeamento simples
+            const map = {dash:0, inventario:1, tasks:2, fin:3, vault:4};
+            if(btns[map[id]]) btns[map[id]].classList.add('active');
+            
+            const titles = {dash:'Central de Comando', inventario:'Matriz de Produtos', tasks:'Protocolo de Execução', fin:'Fluxo Financeiro', vault:'Cofre de Dados'};
+            document.getElementById('view-title').innerText = titles[id];
         }
 
-        function logMood(m) { alert("Sincronizado: " + m); }
-        function saveLocal() { localStorage.setItem('visao_strat', document.getElementById('strat-notes').value); }
-        function togglePrivacy() { state.privacy = !state.privacy; document.querySelectorAll('.blur-val').forEach(e => state.privacy ? e.classList.add('blur-val') : e.classList.remove('blur-val')); }
-        
+        function togglePrivacy() {
+            core.privacy = !core.privacy;
+            document.querySelectorAll('.blur-val').forEach(v => v.style.filter = core.privacy ? 'blur(12px)' : 'none');
+            document.getElementById('priv-btn').innerText = core.privacy ? '🙈' : '👁️';
+            showToast(core.privacy ? "Modo Privacidade Ativo" : "Dados Visíveis", "neutral");
+        }
+
         function generateAIPrompt() {
-            const p = `Analise meu Inventário Visão. Saldo: ${document.getElementById('bal-total').innerText}. Gere um insight estratégico para o Q1 de 2026.`;
-            navigator.clipboard.writeText(p); alert("Prompt de Inteligência Copiado!");
+            const prompt = `[SISTEMA OMNI DUMP] > Saldo Atual: ${document.getElementById('total-money').innerText}. > Nível do Operador: ${core.user.level}. > Inventário: ${core.inventory.length} SKUs. Ação: Analisar saúde financeira e sugerir otimização de fluxo para os próximos 30 dias.`;
+            navigator.clipboard.writeText(prompt);
+            showToast("Dados copiados para Clipboard.", "success");
         }
 
-        function startPomo() {
-            let t = 1500; const b = document.getElementById('pomo-btn');
-            setInterval(() => { if(t > 0) { t--; b.innerText = `${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`; } }, 1000);
+        // Modal Helpers
+        function openModalHTML(html) {
+            const content = document.getElementById('modal-content');
+            content.innerHTML = html;
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('hidden-modal');
+            overlay.classList.add('visible-modal');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        function openModal(type) {
+            if(type === 'addItem') {
+                const html = `
+                    <h3 class="text-2xl font-bold text-white mb-4">Adicionar Item</h3>
+                    <input id="add-sku" class="w-full bg-black/30 border border-white/10 p-3 rounded-xl mb-2 text-white" placeholder="SKU (ex: 6K-099)">
+                    <input id="add-name" class="w-full bg-black/30 border border-white/10 p-3 rounded-xl mb-2 text-white" placeholder="Nome do Produto">
+                    <input id="add-qty" type="number" class="w-full bg-black/30 border border-white/10 p-3 rounded-xl mb-4 text-white" placeholder="Quantidade">
+                    <button onclick="confirmAddItem()" class="w-full bg-emerald-600 p-3 rounded-xl font-bold text-white">Salvar</button>
+                    <button onclick="closeModal()" class="w-full text-xs text-slate-500 mt-2 p-2">Cancelar</button>
+                `;
+                openModalHTML(html);
+            }
+        }
+        
+        function confirmAddItem() {
+            const sku = document.getElementById('add-sku').value;
+            const name = document.getElementById('add-name').value;
+            const qty = document.getElementById('add-qty').value;
+            if(sku && name) {
+                core.inventory.push({sku, name, cat: 'Geral', qty});
+                renderInventory();
+                closeModal();
+                showToast("Item adicionado à Matriz.", "success");
+            }
         }
 
-        function exportData() {
-            const blob = new Blob([JSON.stringify(state.fin)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inventario_visao_backup.json'; a.click();
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                overlay.classList.remove('visible-modal');
+                overlay.classList.add('hidden-modal');
+            }, 200);
+        }
+
+        function showToast(msg, type) {
+            const c = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            let colors = 'bg-slate-800 border-slate-700 text-white';
+            if(type === 'success') colors = 'bg-emerald-900/90 border-emerald-500/50 text-emerald-100';
+            if(type === 'error') colors = 'bg-red-900/90 border-red-500/50 text-red-100';
+
+            el.className = `toast glass p-4 rounded-xl border flex items-center gap-3 shadow-2xl backdrop-blur-xl min-w-[280px] ${colors}`;
+            el.innerHTML = `<span class="text-lg">${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span> <span class="text-xs font-bold uppercase tracking-wider">${msg}</span>`;
+            c.appendChild(el);
+            requestAnimationFrame(() => el.classList.add('show'));
+            setTimeout(() => {
+                el.classList.remove('show');
+                setTimeout(() => el.remove(), 400);
+            }, 3000);
         }
     </script>
 </body>
