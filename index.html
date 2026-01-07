@@ -475,3 +475,96 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VISÃO OS 4.0</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { darkbg: '#0f172a', card: '#1e293b' } } }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .tab-content { display: none; animation: fadeUp 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Efeito de Vidro */
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
+        .dark .glass { background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255,255,255,0.05); }
+
+        /* MODO PRIVACIDADE (BLUR) */
+        .blur-sensitive { filter: blur(5px); transition: filter 0.3s; cursor: pointer; }
+        .blur-sensitive:hover { filter: blur(0); }
+
+        /* Mobile Nav */
+        @media (max-width: 768px) {
+            .nav-mobile { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid #e2e8f0; z-index: 50; display: flex; justify-content: space-around; padding-bottom: 15px; }
+            .dark .nav-mobile { background: rgba(15, 23, 42, 0.95); border-color: #334155; }
+            main { padding-bottom: 120px; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-darkbg dark:text-slate-100 transition-colors duration-300">
+
+    <div id="login-page" class="fixed inset-0 z-[200] flex items-center justify-center bg-darkbg p-6">
+        <div class="glass w-full max-w-sm p-10 rounded-[40px] text-center shadow-2xl">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center text-white text-3xl font-black shadow-lg">V4</div>
+            <h1 class="text-3xl font-black italic mb-2 tracking-tighter">VISÃO OS</h1>
+            <form onsubmit="handleLogin(event)" class="space-y-4 mt-8">
+                <input type="password" id="pass" placeholder="Senha" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold text-center">
+                <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black shadow-lg">ENTRAR</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-page" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <nav class="hidden md:flex flex-col w-72 h-screen p-6 border-r border-slate-200 dark:border-slate-800 fixed bg-white dark:bg-darkbg z-50">
+            <div class="mb-8 text-2xl font-black italic text-blue-600 tracking-tighter px-4">VISÃO 4.0</div>
+            <div class="flex-1 space-y-2 overflow-y-auto">
+                <button onclick="nav('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 active bg-blue-50 dark:bg-slate-800 text-blue-600">🏠 Início</button>
+                <button onclick="nav('habits', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">🔥 Hábitos</button>
+                <button onclick="nav('finance', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">💰 Financeiro</button>
+                <button onclick="nav('checklist', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">📋 Tarefas</button>
+                <button onclick="nav('files', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">📂 Arquivos</button>
+                <button onclick="nav('notes', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">📝 Notas</button>
+            </div>
+        </nav>
+
+        <div class="md:hidden nav-mobile">
+            <button onclick="nav('dashboard', this)" class="w-full text-blue-600 flex flex-col items-center justify-center"><span class="text-xl">🏠</span></button>
+            <button onclick="nav('habits', this)" class="w-full text-slate-400 flex flex-col items-center justify-center"><span class="text-xl">🔥</span></button>
+            <button onclick="nav('finance', this)" class="w-full text-slate-400 flex flex-col items-center justify-center"><span class="text-xl">💰</span></button>
+            <button onclick="nav('checklist', this)" class="w-full text-slate-400 flex flex-col items-center justify-center"><span class="text-xl">📋</span></button>
+            <button onclick="document.getElementById('mobile-menu').classList.remove('hidden')" class="w-full text-slate-400 flex flex-col items-center justify-center"><span class="text-xl">☰</span></button>
+        </div>
+
+        <main class="flex-1 p-5 md:p-10 md:ml-72 max-w-7xl w-full mx-auto">
+            
+            <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <div class="w-full md:w-auto">
+                    <h2 id="page-title" class="text-3xl font-black italic uppercase tracking-tighter">Dashboard</h2>
+                    <p id="current-date" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
+                </div>
+                
+                <div class="flex gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-64">
+                        <input type="text" id="global-search" onkeyup="globalSearch(this.value)" placeholder="🔍 Buscar tudo..." class="w-full bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
+                        <div id="search-results" class="hidden absolute top-12 left-0 right-0 bg-white dark:bg-slate-900 shadow-2xl rounded-2xl p-2 z-[60] max-h-60 overflow-y-auto border dark:border-slate-700"></div>
+                    </div>
+
+                    <button onclick="togglePrivacy()" id="btn-privacy" class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm" title="Ocultar Valores">👁️</button>
+                    <button onclick="toggleTheme()" class="p
