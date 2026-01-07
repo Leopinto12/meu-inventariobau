@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTÁRIO VISAO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .sidebar-btn.active { background-color: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
+        .done-text { text-decoration: line-through; opacity: 0.5; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <div id="login-page" class="h-screen flex items-center justify-center bg-slate-900 px-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 font-black text-white text-3xl shadow-xl">IV</div>
+                <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tighter text-center">Inventário Visão</h2>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <input type="text" id="user" placeholder="Usuário" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="password" id="pass" placeholder="Senha" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500" required>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">ENTRAR</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-page" class="flex h-screen hidden">
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm">
+            <div class="p-6 font-black text-xl text-blue-600 italic tracking-tighter">INVENTÁRIO VISAO</div>
+            <nav class="flex-1 px-3 space-y-1">
+                <button onclick="showTab('tab-arquivos', this)" class="sidebar-btn active w-full flex items-center gap-3 p-3 rounded-lg font-semibold">📁 Arquivos</button>
+                <button onclick="showTab('tab-cronograma', this)" class="sidebar-btn w-full flex items-center gap-3 p-3 rounded-lg font-semibold text-slate-500">📅 Cronograma</button>
+                <button onclick="showTab('tab-notas', this)" class="sidebar-btn w-full flex items-center gap-3 p-3 rounded-lg font-semibold text-slate-500">📝 Anotações</button>
+                <button onclick="showTab('tab-desempenho', this)" class="sidebar-btn w-full flex items-center gap-3 p-3 rounded-lg font-semibold text-slate-500">📊 Desempenho</button>
+            </nav>
+            <div class="p-4 border-t"><button onclick="location.reload()" class="w-full text-red-500 text-[10px] font-black p-2 hover:bg-red-50 rounded-lg uppercase tracking-widest">Sair</button></div>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto">
+            
+            <section id="tab-arquivos" class="tab-content active">
+                <div class="flex justify-between items-center mb-8 border-b pb-4">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-800">Meus Arquivos</h2>
+                    <div class="flex gap-2">
+                        <input type="date" id="filter-date-files" onchange="renderFiles()" class="text-sm border border-slate-200 p-2 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        
+                        <button onclick="document.getElementById('realFileInput').click()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md">
+                            + Selecionar Arquivo
+                        </button>
+                        <input type="file" id="realFileInput" class="hidden" onchange="addFile(event)">
+                    </div>
+                </div>
+                <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+            </section>
+
+            <section id="tab-cronograma" class="tab-content">
+                <div class="flex justify-between items-center mb-8 border-b pb-4">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-800">Hoje</h2>
+                    <button onclick="addSchedule()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">+ Atividade</button>
+                </div>
+                <div id="schedule-list" class="space-y-3 mb-8"></div>
+                <button onclick="saveDayPerformance()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 shadow-xl transition-all">FINALIZAR DIA</button>
+            </section>
+
+            <section id="tab-notas" class="tab-content">
+                <div class="flex flex-col md:flex-row justify-between gap-4 mb-8 border-b pb-4">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-800">Notas</h2>
+                    <div class="flex flex-1 gap-2">
+                        <input type="text" id="search-note" oninput="renderNotes()" placeholder="Pesquisar palavra..." class="border p-3 rounded-xl text-sm flex-1 outline-none">
+                        <input type="date" id="filter-date-notes" onchange="renderNotes()" class="text-sm border p-3 rounded-xl">
+                    </div>
+                    <button onclick="addNote()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold">+ Nota</button>
+                </div>
+                <div id="notes-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </section>
+
+            <section id="tab-desempenho" class="tab-content">
+                <h2 class="text-3xl font-black uppercase italic tracking-tighter text-slate-800 mb-8 border-b pb-4">Dashboard Mensal</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200">
+                        <p class="text-slate-400 text-[10px] font-black uppercase">Atividades Totais</p>
+                        <h4 id="dash-total" class="text-4xl font-black mt-2 text-slate-800">0</h4>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-l-8 border-l-blue-500 shadow-sm">
+                        <p class="text-slate-400 text-[10px] font-black uppercase text-blue-600">Média Eficiência</p>
+                        <h4 id="dash-avg" class="text-4xl font-black text-blue-600 mt-2">0%</h4>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200">
+                        <p class="text-slate-400 text-[10px] font-black uppercase">Dias Salvos</p>
+                        <h4 id="dash-days" class="text-4xl font-black mt-2 text-slate-800">0</h4>
+                    </div>
+                </div>
+                <div id="monthly-history" class="space-y-4"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-review" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 id="modal-title" class="font-black uppercase italic text-slate-800">Revisão</h3>
+                <button onclick="closeModal()" class="text-red-500 font-bold text-sm">FECHAR</button>
+            </div>
+            <div id="modal-content" class="space-y-3 max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('visaoDB')) || { files: [], tasks: [], notes: [], history: [] };
+        function saveDB() { localStorage.setItem('visaoDB', JSON.stringify(db)); }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            if (document.getElementById('user').value === "Leoinventario" && document.getElementById('pass').value === "lnventario2026") {
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('app-page').classList.remove('hidden');
+                renderAll();
+            } else { alert("Login Incorreto!"); }
+        }
+
+        function showTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active', 'text-blue-600', 'bg-blue-50'));
+            btn.classList.add('active');
+            renderAll();
+        }
+
+        // ARQUIVOS
+        function addFile(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const url = URL.createObjectURL(file);
+            db.files.unshift({ name: file.name, date: new Date().toISOString().split('T')[0], tempUrl: url });
+            saveDB();
+            renderFiles();
+        }
+
+        function renderFiles() {
+            const list = document.getElementById('file-list');
+            const dF = document.getElementById('filter-date-files').value;
+            list.innerHTML = '';
+            db.files.filter(f => !dF || f.date === dF).forEach((f, i) => {
+                list.innerHTML += `<div class="bg-white p-5 rounded-2xl border shadow-sm flex flex-col gap-3">
+                    <span class="font-bold text-sm truncate text-slate-700">📄 ${f.name}</span>
+                    <div class="flex justify-between items-center border-t pt-3">
+                        <span class="text-[9px] font-black text-slate-400 uppercase">${f.date}</span>
+                        <div class="flex gap-2">
+                            <a href="${f.tempUrl}" download="${f.name}" class="text-blue-600 text-[10px] font-black uppercase bg-blue-50 px-2 py-1 rounded">Instalar</a>
+                            <button onclick="db.files.splice(${i},1);saveDB();renderFiles()" class="text-red-400 text-[10px] font-black uppercase">Apagar</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // CRONOGRAMA
+        function addSchedule() {
+            const t = prompt("O que precisa fazer?");
+            if(t) { db.tasks.push({ text: t, done: false }); saveDB(); renderTasks(); }
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('schedule-list');
+            list.innerHTML = '';
+            db.tasks.forEach((t, i) => {
+                list.innerHTML += `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" ${t.done?'checked':''} onchange="db.tasks[${i}].done = this.checked; saveDB(); renderTasks()" class="w-5 h-5 accent-blue-600">
+                        <span class="font-bold ${t.done?'done-text text-slate-400':'text-slate-800'}">${t.text}</span>
+                    </label>
+                    <button onclick="db.tasks.splice(${i},1);saveDB();renderTasks()" class="text-red-300 font-bold">×</button>
+                </div>`;
+            });
+        }
+
+        function saveDayPerformance() {
+            if(db.tasks.length === 0) return;
+            const done = db.tasks.filter(t => t.done).length;
+            const eff = Math.round((done / db.tasks.length) * 100);
+            db.history.unshift({ date: new Date().toLocaleDateString('pt-BR'), total: db.tasks.length, done, perc: eff, items: [...db.tasks] });
+            db.tasks = []; saveDB(); renderAll(); alert("Histórico Salvo!");
+        }
+
+        // NOTAS
+        function addNote() {
+            const n = prompt("Sua nota:");
+            if(n) { db.notes.unshift({ text: n, date: new Date().toISOString().split('T')[0] }); saveDB(); renderNotes(); }
+        }
+
+        function renderNotes() {
+            const s = document.getElementById('search-note').value.toLowerCase();
+            const d = document.getElementById('filter-date-notes').value;
+            const list = document.getElementById('notes-list');
+            list.innerHTML = '';
+            db.notes.filter(n => n.text.toLowerCase().includes(s) && (!d || n.date === d)).forEach((n, i) => {
+                list.innerHTML += `<div class="bg-white p-6 rounded-2xl border shadow-sm group relative">
+                    <p class="text-sm font-medium text-slate-700">${n.text}</p>
+                    <div class="mt-4 flex justify-between items-center border-t pt-3">
+                        <span class="text-[9px] font-black text-slate-300 italic uppercase">${n.date}</span>
+                        <button onclick="db.notes.splice(${i},1);saveDB();renderNotes()" class="text-red-400 font-black text-[10px] opacity-0 group-hover:opacity-100 transition-all">EXCLUIR</button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // DESEMPENHO
+        function renderHistory() {
+            const list = document.getElementById('monthly-history');
+            let tA = 0, tP = 0; list.innerHTML = '';
+            db.history.forEach((h, i) => {
+                tA += h.total; tP += h.perc;
+                list.innerHTML += `<div onclick="reviewDay(${i})" class="bg-white p-4 rounded-xl border-l-4 border-l-blue-600 shadow-sm flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-all">
+                    <div><span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${h.date}</span><h4 class="font-black text-slate-700">${h.done}/${h.total} Atividades</h4></div>
+                    <div class="text-right"><span class="text-2xl font-black text-blue-600">${h.perc}%</span><p class="text-[9px] font-black text-slate-400 uppercase">REVISAR</p></div>
+                </div>`;
+            });
+            document.getElementById('dash-total').innerText = tA;
+            document.getElementById('dash-days').innerText = db.history.length;
+            document.getElementById('dash-avg').innerText = db.history.length > 0 ? Math.round(tP / db.history.length) + "%" : "0%";
+        }
+
+        function reviewDay(i) {
+            const day = db.history[i];
+            document.getElementById('modal-title').innerText = `DIA: ${day.date}`;
+            document.getElementById('modal-content').innerHTML = day.items.map(it => `<div class="p-3 bg-slate-50 rounded-xl flex justify-between text-sm font-bold border"><span class="${it.done?'text-green-600':'text-red-400'}">${it.text}</span><span>${it.done?'OK':'PENDENTE'}</span></div>`).join('');
+            document.getElementById('modal-review').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('modal-review').classList.add('hidden'); }
+        function renderAll() { renderFiles(); renderTasks(); renderNotes(); renderHistory(); }
+    </script>
+</body>
+</html>
