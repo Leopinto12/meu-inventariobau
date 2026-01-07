@@ -1,244 +1,165 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VISÃO OS 5.0 TITANIUM</title>
+    <title>VISÃO OS OMEGA | 2026</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { colors: { darkbg: '#020617', card: '#0f172a', accent: '#3b82f6' } } }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .tab-content { display: none; animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .tab-content.active { display: block; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Glass & Blur */
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); }
-        .dark .glass { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.05); }
-        .blur-secret { filter: blur(6px); transition: filter 0.3s; cursor: pointer; user-select: none; }
-        .blur-secret:hover { filter: blur(0); }
-
-        /* Timer Pulse */
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .timer-active { animation: pulse-red 2s infinite; }
-
-        /* Mobile Nav */
-        @media (max-width: 768px) {
-            .nav-mobile { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); border-top: 1px solid #e2e8f0; z-index: 50; display: flex; justify-content: space-around; padding-bottom: 20px; }
-            .dark .nav-mobile { background: rgba(2, 6, 23, 0.9); border-color: #1e293b; }
-            main { padding-bottom: 120px; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: #020617; 
+            color: #f8fafc; 
+            overflow-x: hidden;
         }
+        .glass { 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.05); 
+        }
+        .blur-val { 
+            filter: blur(12px); 
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: pointer; 
+        }
+        .blur-val:hover { filter: blur(0); }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: zoomIn 0.3s ease-out; }
+        
+        @keyframes zoomIn { 
+            from { opacity: 0; transform: scale(0.95); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
+
+        .nav-item { transition: all 0.3s ease; opacity: 0.4; }
+        .nav-active { color: #3b82f6; opacity: 1 !important; transform: translateY(-5px); }
+        
+        input, select { 
+            background: rgba(255,255,255,0.03) !important; 
+            border: 1px solid rgba(255,255,255,0.1) !important; 
+            color: white !important; 
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-darkbg dark:text-slate-100 transition-colors duration-500 selection:bg-blue-500 selection:text-white">
+<body class="min-h-screen">
 
-    <div id="login-page" class="fixed inset-0 z-[200] flex items-center justify-center bg-darkbg p-6">
-        <div class="glass w-full max-w-sm p-10 rounded-[40px] text-center shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-            <h1 class="text-4xl font-extrabold tracking-tighter mb-2">VISÃO 5.0</h1>
-            <p class="text-slate-400 text-xs uppercase tracking-widest mb-8">Titanium Edition</p>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="password" id="pass" placeholder="Acesso" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold text-center border focus:border-blue-500 transition-colors">
-                <button type="submit" class="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-black transition-transform active:scale-95">INICIAR SISTEMA</button>
-            </form>
+    <div id="login-screen" class="fixed inset-0 z-[200] flex items-center justify-center bg-[#020617] p-4">
+        <div class="glass p-10 rounded-[50px] w-full max-w-sm text-center border-blue-500/20 shadow-2xl">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center text-4xl shadow-lg shadow-blue-500/40 font-black">V</div>
+            <h1 class="text-3xl font-black mb-2 tracking-tighter">VISÃO <span class="text-blue-500">OMEGA</span></h1>
+            <p class="text-slate-500 text-[10px] font-bold tracking-[0.4em] mb-8 uppercase">Acesso Restrito 2026</p>
+            <input type="password" id="pass" placeholder="PASSWORD" class="w-full p-5 rounded-2xl mb-4 text-center outline-none focus:ring-2 ring-blue-500 transition-all">
+            <button onclick="unlock()" class="w-full bg-white text-black py-5 rounded-2xl font-black hover:bg-blue-500 hover:text-white transition-all transform active:scale-95">IGNITION</button>
         </div>
     </div>
 
-    <div id="app-page" class="hidden min-h-screen flex flex-col md:flex-row">
-        
-        <nav class="hidden md:flex flex-col w-72 h-screen p-6 border-r border-slate-200 dark:border-slate-800 fixed bg-white/50 dark:bg-darkbg/50 backdrop-blur-md z-50">
-            <div class="mb-10 flex items-center gap-3 px-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black">V</div>
-                <span class="text-xl font-black italic tracking-tighter">VISÃO OS</span>
+    <div id="app" class="hidden">
+        <header class="p-8 flex justify-between items-center max-w-5xl mx-auto">
+            <div>
+                <h2 id="tab-title" class="text-4xl font-black italic tracking-tighter uppercase">Nexus</h2>
+                <p id="clock" class="text-[10px] font-bold text-blue-400 tracking-widest mt-1 uppercase"></p>
             </div>
-            <div class="flex-1 space-y-2">
-                <button onclick="nav('dashboard', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 bg-blue-50 dark:bg-slate-800 text-blue-600">🏠 Dashboard</button>
-                <button onclick="nav('focus', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">🍅 Modo Foco</button>
-                <button onclick="nav('finance', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">💰 Financeiro</button>
-                <button onclick="nav('tasks', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">✅ Tarefas</button>
-                <button onclick="nav('vault', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">🔐 Cofre</button>
+            <div class="flex gap-2">
+                <button onclick="togglePrivacy()" class="w-12 h-12 glass rounded-2xl flex items-center justify-center">🔒</button>
+                <button onclick="window.location.reload()" class="w-12 h-12 glass rounded-2xl flex items-center justify-center">🔄</button>
             </div>
-            <div class="pt-6 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="exportData()" class="w-full p-3 rounded-xl font-bold text-xs uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-blue-500 flex items-center justify-center gap-2">💾 Backup Total</button>
-            </div>
-        </nav>
+        </header>
 
-        <div class="md:hidden nav-mobile">
-            <button onclick="nav('dashboard', this)" class="flex flex-col items-center justify-center text-blue-600 w-full"><span class="text-2xl">🏠</span></button>
-            <button onclick="nav('focus', this)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">🍅</span></button>
-            <button onclick="nav('finance', this)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">💰</span></button>
-            <button onclick="nav('tasks', this)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">✅</span></button>
-            <button onclick="nav('settings-mob', null)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">☰</span></button>
-        </div>
-
-        <main class="flex-1 p-5 md:p-10 md:ml-72 max-w-7xl w-full mx-auto">
+        <main class="max-w-5xl mx-auto px-6 pb-40">
             
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h2 id="page-title" class="text-3xl font-extrabold tracking-tight">Visão Geral</h2>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 flex gap-2">
-                        <span id="date-display"></span> • <span id="time-display"></span>
-                    </p>
-                </div>
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <div class="relative flex-1 md:w-64">
-                        <input type="text" onkeyup="globalSearch(this.value)" placeholder="🔍 Buscar..." class="w-full bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
-                        <div id="search-box" class="hidden absolute top-14 left-0 w-full bg-white dark:bg-slate-900 shadow-2xl rounded-2xl p-2 z-50 border dark:border-slate-700 max-h-60 overflow-auto"></div>
-                    </div>
-                    <button onclick="togglePrivacy()" id="btn-priv" class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:scale-105 transition">👁️</button>
-                    <button onclick="toggleTheme()" class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:scale-105 transition">🌙</button>
-                </div>
-            </header>
-
-            <section id="dashboard" class="tab-content active">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="glass p-6 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/20">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">Saldo Mensal</p>
-                                <h3 id="dash-saldo" class="val-secret text-3xl font-black mt-1">R$ 0,00</h3>
-                            </div>
-                            <span class="text-2xl opacity-50">💰</span>
-                        </div>
-                        <div class="mt-6 flex gap-2">
-                            <span class="text-[10px] bg-white/20 px-2 py-1 rounded">Ent: <span id="dash-ent" class="val-secret">0</span></span>
-                            <span class="text-[10px] bg-white/20 px-2 py-1 rounded">Sai: <span id="dash-sai" class="val-secret">0</span></span>
-                        </div>
-                    </div>
-
-                    <div class="glass p-6 rounded-[32px] border-l-4 border-yellow-400">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Como você está?</p>
-                        <div class="flex justify-between mt-4">
-                            <button onclick="setMood('😡')" class="text-3xl hover:scale-125 transition">😡</button>
-                            <button onclick="setMood('😐')" class="text-3xl hover:scale-125 transition">😐</button>
-                            <button onclick="setMood('🙂')" class="text-3xl hover:scale-125 transition">🙂</button>
-                            <button onclick="setMood('🔥')" class="text-3xl hover:scale-125 transition">🔥</button>
-                        </div>
-                        <p id="last-mood" class="text-xs text-slate-400 mt-4 text-center font-bold">Hoje: -</p>
-                    </div>
-
-                    <div class="glass p-6 rounded-[32px]">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Acesso Rápido</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="https://web.whatsapp.com" target="_blank" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20 transition">
-                                <span class="text-green-500">💬</span> <span class="text-xs font-bold">WhatsApp</span>
-                            </a>
-                            <a href="https://chat.openai.com" target="_blank" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 transition">
-                                <span class="text-slate-500">🤖</span> <span class="text-xs font-bold">GPT</span>
-                            </a>
-                            <a href="https://mail.google.com" target="_blank" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                <span class="text-red-500">✉️</span> <span class="text-xs font-bold">Gmail</span>
-                            </a>
-                            <button onclick="nav('focus')" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-orange-50 transition">
-                                <span class="text-orange-500">🍅</span> <span class="text-xs font-bold">Focar</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <h3 class="font-bold text-slate-400 text-xs uppercase mb-4 tracking-widest">Atividades Recentes</h3>
-                <div id="dash-feed" class="space-y-3"></div>
-            </section>
-
-            <section id="focus" class="tab-content">
-                <div class="flex flex-col items-center justify-center py-10">
-                    <div class="relative">
-                        <div id="timer-ring" class="w-64 h-64 rounded-full border-8 border-slate-100 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-900 shadow-2xl">
-                            <h1 id="timer-display" class="text-6xl font-black tabular-nums text-slate-800 dark:text-white tracking-tighter">25:00</h1>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-4 mt-10">
-                        <button onclick="startTimer()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg hover:scale-105 transition">INICIAR</button>
-                        <button onclick="resetTimer()" class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-8 py-4 rounded-2xl font-black hover:bg-slate-300 transition">RESET</button>
-                    </div>
-
-                    <div class="mt-12 bg-orange-50 dark:bg-orange-900/20 p-6 rounded-2xl border border-orange-100 dark:border-orange-900/30 max-w-md w-full text-center">
-                        <p class="text-orange-600 dark:text-orange-400 font-bold text-sm">💡 Dica de Produtividade</p>
-                        <p class="text-slate-600 dark:text-slate-400 text-xs mt-2">Trabalhe focado por 25 minutos. Quando o timer zerar, levante-se, beba água e estique as pernas.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="finance" class="tab-content">
-                <div class="flex gap-3 mb-6">
-                    <button onclick="addFin('entrada')" class="flex-1 bg-green-500 text-white p-4 rounded-2xl font-black shadow-lg shadow-green-500/20 hover:scale-[1.02] transition">+ RECEITA</button>
-                    <button onclick="addFin('saida')" class="flex-1 bg-red-500 text-white p-4 rounded-2xl font-black shadow-lg shadow-red-500/20 hover:scale-[1.02] transition">- DESPESA</button>
-                </div>
+            <section id="tab-dash" class="tab-content active space-y-6">
                 
-                <div class="bg-white dark:bg-slate-800 rounded-[30px] p-6 shadow-sm mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg">Extrato</h3>
-                        <button onclick="addRecorrentes()" class="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-lg uppercase text-slate-500">Repetir Fixos</button>
+                <div class="glass p-10 rounded-[50px] border-l-4 border-blue-500">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Liquidez Disponível</p>
+                    <h3 id="bal-total" class="text-6xl font-black blur-val tracking-tighter">R$ 0,00</h3>
+                    
+                    <div class="mt-8">
+                        <div class="flex justify-between text-[10px] font-bold mb-2">
+                            <span class="text-slate-500 uppercase">Velocidade de Gasto (Burn Rate)</span>
+                            <span id="burn-perc" class="text-blue-400">0%</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                            <div id="burn-bar" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
+                        </div>
                     </div>
-                    <div id="fin-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scroll"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="glass p-6 rounded-[35px] flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center text-2xl">🔥</div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase">Consistência</p>
+                            <p id="user-lv" class="text-lg font-black uppercase">Lv. 12 Strategist</p>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-[35px] flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-2xl">📈</div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase">Projeção 12 Meses</p>
+                            <p id="proj-year" class="text-lg font-black blur-val">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass p-8 rounded-[40px] border-white/5">
+                    <h4 class="text-[10px] font-black text-slate-500 mb-4 uppercase tracking-widest">Lançamento de Fluxo</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" id="in-desc" placeholder="Descrição" class="p-4 rounded-2xl outline-none">
+                        <input type="number" id="in-val" placeholder="Valor" class="p-4 rounded-2xl outline-none">
+                        <select id="in-tipo" class="p-4 rounded-2xl outline-none">
+                            <option value="saida">Saída (-)</option>
+                            <option value="entrada">Entrada (+)</option>
+                        </select>
+                        <button onclick="saveFin()" class="bg-blue-600 font-black rounded-2xl p-4 hover:bg-blue-500 transition shadow-lg shadow-blue-900/40">EXECUTAR</button>
+                    </div>
                 </div>
             </section>
 
-            <section id="tasks" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <h3 class="font-black text-slate-400 text-xs uppercase mb-4">Hábitos & Rotina</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="habit-input" placeholder="Novo hábito..." class="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
-                            <button onclick="addHabit()" class="bg-orange-500 text-white px-4 rounded-xl font-black">+</button>
-                        </div>
-                        <div id="habit-list" class="space-y-2"></div>
+            <section id="tab-flux" class="tab-content space-y-3">
+                <div id="history-list" class="space-y-3">
                     </div>
-
-                    <div>
-                        <h3 class="font-black text-slate-400 text-xs uppercase mb-4">Tarefas de Hoje</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="task-input" placeholder="O que fazer hoje?" class="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
-                            <button onclick="addTask()" class="bg-blue-600 text-white px-4 rounded-xl font-black">+</button>
-                        </div>
-                        <div id="task-list" class="space-y-2"></div>
-                    </div>
-                </div>
             </section>
 
-            <section id="vault" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-yellow-50 dark:bg-yellow-900/10 p-6 rounded-[30px] border border-yellow-100 dark:border-yellow-900/30">
-                        <h3 class="font-black text-yellow-600 mb-4">📝 Notas Rápidas</h3>
-                        <button onclick="addNote()" class="w-full bg-white dark:bg-slate-800 py-3 rounded-xl font-bold text-xs shadow-sm mb-4">Nova Nota</button>
-                        <div id="note-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
-                    </div>
-
-                    <div class="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-[30px] border border-blue-100 dark:border-blue-900/30">
-                        <h3 class="font-black text-blue-600 mb-4">📂 Arquivos na Nuvem</h3>
-                        <button onclick="document.getElementById('up').click()" class="w-full bg-white dark:bg-slate-800 py-3 rounded-xl font-bold text-xs shadow-sm mb-4">Upload Arquivo</button>
-                        <input type="file" id="up" class="hidden" onchange="uploadFile(event)">
-                        <div id="file-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
-                    </div>
+            <section id="tab-brain" class="tab-content">
+                <div class="glass rounded-[40px] overflow-hidden">
+                    <textarea id="notes" onkeyup="localSave()" class="w-full h-[65vh] bg-transparent p-10 outline-none text-lg leading-relaxed italic font-light" placeholder="Escreva suas metas e estratégias para 2026..."></textarea>
                 </div>
             </section>
 
         </main>
-        
-        <div id="settings-mob" class="hidden fixed inset-0 bg-black/80 z-[60] p-6 flex flex-col justify-end" onclick="this.classList.add('hidden')">
-            <div class="bg-white dark:bg-slate-800 rounded-[30px] p-6 space-y-3">
-                <button onclick="nav('vault')" class="w-full p-4 text-left font-bold bg-slate-100 dark:bg-slate-700 rounded-2xl">🔐 Cofre & Notas</button>
-                <button onclick="togglePrivacy()" class="w-full p-4 text-left font-bold bg-slate-100 dark:bg-slate-700 rounded-2xl">👁️ Privacidade</button>
-                <button onclick="toggleTheme()" class="w-full p-4 text-left font-bold bg-slate-100 dark:bg-slate-700 rounded-2xl">🌙 Tema Escuro</button>
-                <button onclick="exportData()" class="w-full p-4 text-left font-bold bg-blue-100 dark:bg-blue-900 text-blue-600 rounded-2xl">💾 Baixar Meus Dados</button>
-            </div>
-        </div>
+
+        <nav class="fixed bottom-10 left-1/2 -translate-x-1/2 glass w-[90%] max-w-sm h-24 rounded-[50px] flex items-center justify-around px-6 border-white/10 shadow-2xl z-[150]">
+            <button onclick="nav('dash', this)" class="nav-item nav-active flex flex-col items-center">
+                <span class="text-2xl">🏠</span>
+                <span class="text-[8px] font-black mt-1">NEXUS</span>
+            </button>
+            <button onclick="nav('flux', this)" class="nav-item flex flex-col items-center">
+                <span class="text-2xl">📊</span>
+                <span class="text-[8px] font-black mt-1">FLUXO</span>
+            </button>
+            <button onclick="nav('brain', this)" class="nav-item flex flex-col items-center">
+                <span class="text-2xl">🧠</span>
+                <span class="text-[8px] font-black mt-1">BRAIN</span>
+            </button>
+            <button onclick="exportJSON()" class="nav-item flex flex-col items-center">
+                <span class="text-2xl">💾</span>
+                <span class="text-[8px] font-black mt-1">BACKUP</span>
+            </button>
+        </nav>
     </div>
 
     <script>
-        // --- 1. CONFIGURAÇÃO ---
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
             authDomain: "inventario-visao.firebaseapp.com",
@@ -249,188 +170,142 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage();
 
-        let appData = { tasks: [], fin: [], notes: [], files: [], habits: [], mood: [] };
-        let privacy = false;
-        let timerInterval = null;
-        let timeLeft = 25 * 60;
-        const hoje = new Date().toLocaleDateString('pt-BR');
+        let state = { fin: [], privacy: false };
 
-        // Relógio
+        // RELÓGIO ATUALIZADO
         setInterval(() => {
             const now = new Date();
-            document.getElementById('time-display').innerText = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-            document.getElementById('date-display').innerText = hoje;
+            document.getElementById('clock').innerText = now.toLocaleString('pt-br', { 
+                weekday: 'long', day: '2-digit', month: 'short', 
+                hour: '2-digit', minute: '2-digit', second: '2-digit' 
+            });
         }, 1000);
 
-        // --- 2. AUTH & CORE ---
-        function handleLogin(e) {
-            e.preventDefault();
+        // LOGIN
+        function unlock() {
             if(document.getElementById('pass').value === "lnventario2026") {
-                document.getElementById('login-page').style.display = 'none';
-                document.getElementById('app-page').classList.remove('hidden');
-                initSystem();
-            } else alert("Senha Incorreta");
-        }
-
-        function initSystem() {
-            // Listeners
-            db.collection("tarefas_hoje").onSnapshot(s => { appData.tasks = s.docs.map(d=>({id:d.id,...d.data()})); renderTasks(); });
-            db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => { appData.fin = s.docs.map(d=>({id:d.id,...d.data()})); renderFin(); });
-            db.collection("habitos").onSnapshot(s => { appData.habits = s.docs.map(d=>({id:d.id,...d.data()})); renderHabits(); });
-            db.collection("notas").orderBy("createdAt", "desc").onSnapshot(s => { appData.notes = s.docs.map(d=>({id:d.id,...d.data()})); renderVault(); });
-            db.collection("arquivos").orderBy("createdAt", "desc").onSnapshot(s => { appData.files = s.docs.map(d=>({id:d.id,...d.data()})); renderVault(); });
-            db.collection("humor").orderBy("date", "desc").limit(1).onSnapshot(s => { if(!s.empty) document.getElementById('last-mood').innerText = `Hoje: ${s.docs[0].data().emoji}`; });
-        }
-
-        // --- 3. UI & NAVEGAÇÃO ---
-        function nav(id, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            // Mobile Menu Close
-            document.getElementById('settings-mob').classList.add('hidden');
-
-            // Titles
-            const titles = { dashboard: 'Visão Geral', focus: 'Modo Foco', finance: 'Controle', tasks: 'Planejamento', vault: 'Cofre Digital' };
-            document.getElementById('page-title').innerText = titles[id];
-
-            // Buttons State
-            if(btn) {
-                document.querySelectorAll('.nav-btn').forEach(b => {
-                    b.classList.remove('bg-blue-50', 'dark:bg-slate-800', 'text-blue-600', 'dark:text-blue-400');
-                    b.classList.add('text-slate-500');
-                });
-                btn.classList.remove('text-slate-500');
-                btn.classList.add('bg-blue-50', 'dark:bg-slate-800', 'text-blue-600', 'dark:text-blue-400');
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                init();
+            } else {
+                alert("Acesso Negado.");
             }
         }
 
-        function togglePrivacy() {
-            privacy = !privacy;
-            document.querySelectorAll('.val-secret').forEach(el => privacy ? el.classList.add('blur-secret') : el.classList.remove('blur-secret'));
-            document.getElementById('btn-priv').innerText = privacy ? '🙈' : '👁️';
+        // INICIALIZAÇÃO
+        function init() {
+            db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => {
+                state.fin = s.docs.map(d => ({id: d.id, ...d.data()}));
+                render();
+            });
+            document.getElementById('notes').value = localStorage.getItem('vision_omega_notes') || '';
         }
 
-        function toggleTheme() { document.documentElement.classList.toggle('dark'); }
-
-        // --- 4. FUNCIONALIDADES ---
-        
-        // Pomodoro
-        function startTimer() {
-            if(timerInterval) return;
-            document.getElementById('timer-ring').classList.add('timer-active');
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                const s = (timeLeft % 60).toString().padStart(2, '0');
-                document.getElementById('timer-display').innerText = `${m}:${s}`;
-                if(timeLeft <= 0) { resetTimer(); alert("Tempo esgotado! Descanse."); }
-            }, 1000);
-        }
-        function resetTimer() {
-            clearInterval(timerInterval); timerInterval = null; timeLeft = 25*60;
-            document.getElementById('timer-display').innerText = "25:00";
-            document.getElementById('timer-ring').classList.remove('timer-active');
-        }
-
-        // Mood
-        async function setMood(emoji) {
-            await db.collection("humor").add({ emoji, date: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-
-        // Search
-        function globalSearch(q) {
-            const box = document.getElementById('search-box');
-            if(!q) { box.classList.add('hidden'); return; }
-            box.classList.remove('hidden');
-            const term = q.toLowerCase();
-            let html = '';
+        // RENDERIZAÇÃO GERAL
+        function render() {
+            let total = 0, entMes = 0, saiMes = 0;
+            let listHtml = '';
             
-            appData.notes.forEach(n => { if(n.text.toLowerCase().includes(term)) html += `<div onclick="nav('vault')" class="p-2 border-b dark:border-slate-800 hover:bg-slate-50 cursor-pointer"><span class="text-xs font-bold text-yellow-500">NOTA</span> <span class="text-xs dark:text-slate-300">${n.text.substring(0,30)}...</span></div>`});
-            appData.fin.forEach(f => { if(f.desc.toLowerCase().includes(term)) html += `<div onclick="nav('finance')" class="p-2 border-b dark:border-slate-800 hover:bg-slate-50 cursor-pointer"><span class="text-xs font-bold text-green-500">FIN</span> <span class="text-xs dark:text-slate-300">${f.desc} - R$${f.valor}</span></div>`});
-            
-            box.innerHTML = html || '<p class="text-xs text-center p-2 text-slate-400">Nada encontrado.</p>';
-        }
+            state.fin.forEach(i => {
+                const val = parseFloat(i.valor);
+                if(i.tipo === 'entrada') { total += val; entMes += val; }
+                else { total -= val; saiMes += val; }
 
-        // Backup
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
-            const node = document.createElement('a');
-            node.setAttribute("href", dataStr);
-            node.setAttribute("download", `visao_backup_${Date.now()}.json`);
-            document.body.appendChild(node); node.click(); node.remove();
-        }
-
-        // --- 5. RENDERIZAÇÃO ---
-        
-        function renderFin() {
-            let ent=0, sai=0;
-            const mesAtual = new Date().getMonth();
-            document.getElementById('fin-list').innerHTML = appData.fin.map(f => {
-                const val = f.valor / f.parcelas;
-                if(f.mes === mesAtual) f.tipo === 'entrada' ? ent+=f.valor : sai+=val;
-                return `
-                <div class="flex justify-between items-center p-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
-                    <div><p class="font-bold text-sm dark:text-slate-200">${f.desc}</p><p class="text-[10px] text-slate-400 uppercase">${f.cat || 'Geral'}</p></div>
+                listHtml += `
+                <div class="glass p-6 rounded-[30px] flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-sm text-slate-200">${i.desc}</p>
+                        <p class="text-[9px] opacity-40 font-black uppercase tracking-widest">
+                            ${i.createdAt ? new Date(i.createdAt.seconds*1000).toLocaleDateString() : 'Processando...'}
+                        </p>
+                    </div>
                     <div class="text-right">
-                        <p class="val-secret font-bold ${f.tipo==='entrada'?'text-green-500':'text-red-500'}">R$ ${val.toFixed(2)}</p>
-                        <button onclick="db.collection('financeiro').doc('${f.id}').delete()" class="text-[9px] text-red-300 hover:text-red-500">APAGAR</button>
+                        <p class="font-black blur-val ${i.tipo==='entrada'?'text-emerald-400':'text-red-400'}">
+                            R$ ${val.toFixed(2)}
+                        </p>
+                        <button onclick="delDoc('${i.id}')" class="text-[8px] font-bold text-red-500/30 hover:text-red-500 uppercase">Excluir</button>
                     </div>
                 </div>`;
-            }).join('');
+            });
+
+            document.getElementById('bal-total').innerText = `R$ ${total.toLocaleString('pt-br')}`;
+            document.getElementById('history-list').innerHTML = listHtml;
             
-            document.getElementById('dash-saldo').innerText = `R$ ${(ent-sai).toFixed(2)}`;
-            document.getElementById('dash-ent').innerText = `R$ ${ent.toFixed(2)}`;
-            document.getElementById('dash-sai').innerText = `R$ ${sai.toFixed(2)}`;
-            if(privacy) togglePrivacy(); // Reapply blur
+            // Burn Rate (Meta mensal estimada de gastos: R$ 5000)
+            const burnPerc = Math.min((saiMes / 5000) * 100, 100);
+            document.getElementById('burn-bar').style.width = burnPerc + "%";
+            document.getElementById('burn-perc').innerText = Math.floor(burnPerc) + "%";
+            
+            // Projeção 12 meses
+            const mediaEconomia = (entMes - saiMes);
+            const projecao = total + (mediaEconomia * 12);
+            document.getElementById('proj-year').innerText = `R$ ${projecao.toLocaleString('pt-br')}`;
+
+            if(state.privacy) applyPrivacy(true);
         }
 
-        function renderTasks() {
-            document.getElementById('task-list').innerHTML = appData.tasks.map(t => `
-                <div class="group flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-transparent hover:border-blue-200 transition">
-                    <input type="checkbox" ${t.done?'checked':''} onchange="db.collection('tarefas_hoje').doc('${t.id}').update({done:this.checked})" class="w-5 h-5 accent-blue-600 rounded">
-                    <span class="flex-1 font-bold text-sm dark:text-slate-200 ${t.done?'line-through text-slate-400':''}">${t.text}</span>
-                    <button onclick="db.collection('tarefas_hoje').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 font-bold px-2">✕</button>
-                </div>`).join('');
-        }
-
-        function renderHabits() {
-            document.getElementById('habit-list').innerHTML = appData.habits.map(h => {
-                const done = h.history && h.history.includes(hoje);
-                return `
-                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-xl ${done?'border-l-4 border-orange-500':''}">
-                    <div><p class="font-bold text-sm dark:text-slate-200">${h.name}</p><p class="text-[10px] text-slate-400">🔥 ${h.streak||0} dias</p></div>
-                    ${!done ? `<button onclick="checkHabit('${h.id}', ${h.streak||0})" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-xs font-bold hover:bg-orange-500 hover:text-white transition">FEITO</button>` : '<span class="text-green-500 text-lg">✔</span>'}
-                    <button onclick="db.collection('habitos').doc('${h.id}').delete()" class="text-slate-300 text-[10px] ml-2">x</button>
-                </div>`;
-            }).join('');
-        }
-
-        function renderVault() {
-            document.getElementById('note-list').innerHTML = appData.notes.map(n => `<div class="bg-white dark:bg-slate-900 p-3 rounded-xl text-xs font-bold shadow-sm relative group dark:text-slate-300">${n.text}<button onclick="db.collection('notas').doc('${n.id}').delete()" class="absolute top-1 right-2 text-red-300 opacity-0 group-hover:opacity-100">x</button></div>`).join('');
-            document.getElementById('file-list').innerHTML = appData.files.map(f => `<div class="bg-white dark:bg-slate-900 p-3 rounded-xl flex justify-between items-center shadow-sm"><span class="text-xs font-bold truncate w-32 dark:text-slate-300">${f.name}</span><a href="${f.url}" target="_blank" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded">ABRIR</a></div>`).join('');
-        }
-
-        // --- 6. ADDERS ---
-        async function addTask() { const t=document.getElementById('task-input').value; if(t) await db.collection('tarefas_hoje').add({text:t, done:false}); document.getElementById('task-input').value=''; }
-        async function addHabit() { const t=document.getElementById('habit-input').value; if(t) await db.collection('habitos').add({name:t, streak:0, history:[]}); document.getElementById('habit-input').value=''; }
-        async function checkHabit(id, streak) { await db.collection('habitos').doc(id).update({streak:streak+1, history: firebase.firestore.FieldValue.arrayUnion(hoje)}); }
-        async function addNote() { const t=prompt("Nota:"); if(t) await db.collection('notas').add({text:t, createdAt: firebase.firestore.FieldValue.serverTimestamp()}); }
-        async function uploadFile(e) { const f=e.target.files[0]; if(!f)return; const r=storage.ref(`arquivos/${Date.now()}_${f.name}`); await r.put(f); const u=await r.getDownloadURL(); await db.collection('arquivos').add({name:f.name, url:u, createdAt: firebase.firestore.FieldValue.serverTimestamp()}); }
-        async function addFin(tipo) {
-            const desc = prompt("Descrição:"); const val = parseFloat(prompt("Valor:"));
-            if(desc && val) await db.collection("financeiro").add({desc, valor:val, tipo, parcelas:1, mes:new Date().getMonth(), cat: 'Geral', createdAt: firebase.firestore.FieldValue.serverTimestamp()});
-        }
-        async function addRecorrentes() {
-            if(confirm("Lançar gastos fixos?")) {
-                const batch = db.batch();
-                [{desc:"Aluguel",valor:1000},{desc:"Net",valor:100}].forEach(i => { // EDITE SEUS FIXOS AQUI
-                    batch.set(db.collection("financeiro").doc(), {...i, tipo:'saida', parcelas:1, mes:new Date().getMonth(), cat:'Fixo', createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+        // SALVAR FINANCEIRO
+        async function saveFin() {
+            const desc = document.getElementById('in-desc').value;
+            const valor = parseFloat(document.getElementById('in-val').value);
+            const tipo = document.getElementById('in-tipo').value;
+            
+            if(desc && valor) {
+                await db.collection("financeiro").add({
+                    desc, 
+                    valor, 
+                    tipo, 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                await batch.commit();
+                document.getElementById('in-desc').value = '';
+                document.getElementById('in-val').value = '';
             }
+        }
+
+        // NAVEGAÇÃO
+        function nav(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-'+id).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+            el.classList.add('nav-active');
+            
+            const titles = {dash:'Nexus', flux:'Fluxo', brain:'Estratégia'};
+            document.getElementById('tab-title').innerText = titles[id];
+        }
+
+        // PRIVACIDADE
+        function togglePrivacy() {
+            state.privacy = !state.privacy;
+            applyPrivacy(state.privacy);
+        }
+
+        function applyPrivacy(on) {
+            document.querySelectorAll('.blur-val').forEach(el => {
+                on ? el.classList.add('blur-val') : el.classList.remove('blur-val');
+            });
+        }
+
+        // NOTAS LOCAIS
+        function localSave() {
+            localStorage.setItem('vision_omega_notes', document.getElementById('notes').value);
+        }
+
+        // DELETAR
+        async function delDoc(id) {
+            if(confirm("Deseja eliminar este registro?")) {
+                await db.collection("financeiro").doc(id).delete();
+            }
+        }
+
+        // EXPORTAR BACKUP
+        function exportJSON() {
+            const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.fin));
+            const a = document.createElement('a');
+            a.href = data;
+            a.download = `backup_visao_omega_${new Date().toLocaleDateString()}.json`;
+            a.click();
         }
     </script>
 </body>
