@@ -24,7 +24,6 @@
         input, select { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .nav-btn.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #60a5fa; }
         
-        /* Progress Bar Animation for Tree */
         .tree-progress { transition: stroke-dashoffset 1.5s ease-in-out; }
         
         .god-overlay { display: none; }
@@ -183,9 +182,7 @@
                 <h3 class="text-2xl font-black text-white uppercase tracking-tighter">Locais & Árvores</h3>
                 <button onclick="createNewTree()" class="bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-purple-500/30 transition">+ Adicionar Local</button>
             </div>
-
-            <div id="trees-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                </div>
+            <div id="trees-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
         <section id="tasks" class="tab-content space-y-8">
@@ -201,16 +198,20 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass p-2 rounded-[25px] flex gap-2 items-center pr-4 border-blue-500/20 task-input-area">
-                        <input type="text" id="task-in" placeholder="Nova Tarefa..." class="flex-1 bg-transparent border-none shadow-none p-4 text-sm font-bold focus:ring-0">
+                        <input type="text" id="task-in" placeholder="Nova Tarefa (Hoje)..." class="flex-1 bg-transparent border-none shadow-none p-4 text-sm font-bold focus:ring-0">
                         <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl font-bold flex items-center justify-center">+</button>
                     </div>
                     <div id="task-list" class="space-y-3"></div>
+                    
                     <div class="glass p-6 rounded-[35px] border-t-2 border-orange-500/20 mt-8">
-                        <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Hábitos Diários</h4>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Rotina & Hábitos (Diário)</h4>
+                            <span class="text-[9px] text-slate-600">Aplica-se a todos os dias</span>
+                        </div>
                         <div id="habit-list" class="space-y-2"></div>
                         <div class="flex gap-2 mt-4 task-input-area">
-                            <input type="text" id="habit-in" placeholder="Novo Hábito..." class="flex-1 bg-slate-900 p-2 rounded-lg text-xs font-bold">
-                            <button onclick="addHabit()" class="bg-slate-700 px-3 rounded-lg font-bold text-xs">+</button>
+                            <input type="text" id="habit-in" placeholder="Novo Hábito Recorrente..." class="flex-1 bg-slate-900 p-2 rounded-lg text-xs font-bold">
+                            <button onclick="addGlobalHabit()" class="bg-slate-700 px-3 rounded-lg font-bold text-xs">+ Rotina</button>
                         </div>
                     </div>
                 </div>
@@ -232,8 +233,7 @@
 
         <section id="goals" class="tab-content space-y-6">
             <h3 class="text-2xl font-black text-white mb-6 uppercase tracking-tighter pl-2">Mural de Conquistas 2026</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="goals-list">
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="goals-list"></div>
             <button onclick="addGoal()" class="w-full py-6 rounded-[30px] border-2 border-dashed border-white/10 text-slate-500 font-bold hover:border-white/30 hover:text-white transition uppercase text-xs tracking-widest">+ Adicionar Grande Meta</button>
         </section>
 
@@ -301,9 +301,13 @@
             view: 'dash', privacy: false,
             currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear(),
             selectedDate: new Date().toISOString().split('T')[0],
-            finData: [], tasksData: [], habitsData: [], notesData: [], filesData: [], goalsData: [],
+            finData: [], tasksData: [], 
+            // 'habitsData' agora guarda apenas os LOGS de quem foi feito
+            habitsLog: [], 
+            // 'globalHabits' é a lista de nomes dos hábitos que aparecem todo dia
+            globalHabits: [],
+            notesData: [], filesData: [], goalsData: [],
             xp: 0, level: 1,
-            // ATUALIZAÇÃO: AGORA O SISTEMA ACEITA VÁRIAS ÁRVORES
             trees: [], 
             pomoTime: 25 * 60, pomoInterval: null
         };
@@ -329,29 +333,28 @@
         function init() {
             db.collection("financeiro").onSnapshot(s => { state.finData = s.docs.map(d => ({id:d.id,...d.data()})); renderFin(); updateSurvivalUI(); });
             db.collection("tarefas").onSnapshot(s => { state.tasksData = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
-            db.collection("habitos").onSnapshot(s => { state.habitsData = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
+            
+            // Habitos agora são LOGS
+            db.collection("habitos_logs").onSnapshot(s => { state.habitsLog = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
+            
             db.collection("notas").orderBy("created", "desc").onSnapshot(s => { state.notesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
             db.collection("arquivos").orderBy("created", "desc").onSnapshot(s => { state.filesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
             db.collection("metas").onSnapshot(s => { state.goalsData = s.docs.map(d => ({id:d.id,...d.data()})); renderGoals(); });
             
-            // CARREGAMENTO DAS ÁRVORES (NOVO SISTEMA)
             db.collection("system_stats").doc("main").onSnapshot(d => { 
                 if(d.exists) { 
                     state.xp = d.data().xp || 0; 
                     state.level = d.data().level || 1; 
-                    
-                    // Se existir a nova estrutura 'trees', usa ela. Se for a antiga 'tree', converte.
-                    if (d.data().trees) {
-                        state.trees = d.data().trees;
-                    } else if (d.data().tree) {
-                        // Converte sistema antigo para array
-                        state.trees = [{ id: 'master', name: 'Árvore Mestra', total: d.data().tree.total, pending: d.data().tree.pending }];
-                    } else {
-                        state.trees = [];
-                    }
+                    if (d.data().trees) state.trees = d.data().trees;
+                    else if (d.data().tree) state.trees = [{ id: 'master', name: 'Árvore Mestra', total: d.data().tree.total, pending: d.data().tree.pending }];
+                    else state.trees = [];
+
+                    // Carrega a lista GLOBAL de hábitos
+                    state.globalHabits = d.data().globalHabits || [];
 
                     updateXPUI();
                     renderTrees();
+                    renderTasks(); // Re-renderiza tarefas para mostrar novos hábitos globais
                 }
             });
             updateDate();
@@ -374,30 +377,22 @@
             t.classList.remove('translate-x-full'); setTimeout(() => t.classList.add('translate-x-full'), 3000);
         }
 
-        // --- SISTEMA MULTI-ÁRVORES (NOVO) ---
+        // --- SISTEMA MULTI-ÁRVORES ---
         function renderTrees() {
             const container = document.getElementById('trees-container');
-            container.innerHTML = ""; // Limpa container
-
-            let totalGlobal = 0;
-            let pendingGlobal = 0;
-
+            container.innerHTML = ""; 
+            let totalGlobal = 0; let pendingGlobal = 0;
             state.trees.forEach((tree, index) => {
-                totalGlobal += tree.total;
-                pendingGlobal += tree.pending;
-                
+                totalGlobal += tree.total; pendingGlobal += tree.pending;
                 const done = tree.total - tree.pending;
                 const perc = tree.total > 0 ? Math.round((done / tree.total) * 100) : 0;
-                // Calculo para o SVG (Circunferência é aprox 753)
                 const offset = 753 - (753 * perc) / 100;
-
                 const card = document.createElement('div');
                 card.className = "glass p-8 rounded-[40px] text-center border border-purple-500/20 relative group";
                 card.innerHTML = `
                     <button onclick="deleteTree(${index})" class="absolute top-4 right-4 text-red-500 opacity-0 group-hover:opacity-100 transition text-[10px]">Excluir</button>
                     <h3 class="text-xl font-black text-white mb-2 uppercase tracking-tighter">${tree.name}</h3>
                     <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Progresso Local</p>
-                    
                     <div class="relative w-48 h-48 mx-auto mb-6">
                         <svg class="w-full h-full transform -rotate-90">
                             <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="none" />
@@ -408,7 +403,6 @@
                             <span class="text-[9px] uppercase font-bold text-slate-500 mt-1">Concluído</span>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-2 mb-6">
                         <div class="bg-white/5 p-2 rounded-xl">
                             <p class="text-[9px] font-bold text-slate-500 uppercase">Total</p>
@@ -419,7 +413,6 @@
                             <p class="text-lg font-black text-purple-400">${tree.pending}</p>
                         </div>
                     </div>
-
                     <div class="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
                         <p class="text-[10px] font-bold text-slate-300 mb-2">Abater Pendentes</p>
                         <div class="flex gap-2">
@@ -430,52 +423,32 @@
                 `;
                 container.appendChild(card);
             });
-
-            // Atualiza Dashboard Geral
             const doneGlobal = totalGlobal - pendingGlobal;
             const percGlobal = totalGlobal > 0 ? Math.round((doneGlobal / totalGlobal) * 100) : 0;
             document.getElementById('dash-tree-perc').innerText = `${percGlobal}%`;
             document.getElementById('dash-tree-bar').style.width = `${percGlobal}%`;
         }
-
         function createNewTree() {
             const nome = prompt("Nome da Nova Árvore/Local (Ex: São Luís):");
             if (!nome) return;
             const total = prompt("Quantidade TOTAL de itens neste local:");
             if (!total) return;
-
-            const novaArvore = {
-                id: Date.now().toString(),
-                name: nome,
-                total: parseInt(total),
-                pending: parseInt(total)
-            };
-
+            const novaArvore = { id: Date.now().toString(), name: nome, total: parseInt(total), pending: parseInt(total) };
             const novaLista = [...state.trees, novaArvore];
             db.collection("system_stats").doc("main").update({ trees: novaLista });
             showToast("Local Criado!");
         }
-
         function updateTreeProgress(index) {
             const input = document.getElementById(`tree-in-${index}`);
             const val = parseInt(input.value);
             if(!val || val <= 0) return;
-
             const arvore = state.trees[index];
             let newPending = arvore.pending - val;
             if(newPending < 0) newPending = 0;
-
-            // Atualiza o objeto no array local
             state.trees[index].pending = newPending;
-
-            // Salva no Firebase
             db.collection("system_stats").doc("main").update({ trees: state.trees });
-            
-            gainXP(val * 2); 
-            input.value = '';
-            showToast(`${val} Produtos!`);
+            gainXP(val * 2); input.value = ''; showToast(`${val} Produtos!`);
         }
-
         function deleteTree(index) {
             if(confirm("Tem certeza que deseja apagar essa árvore/local?")) {
                 const novaLista = state.trees.filter((_, i) => i !== index);
@@ -488,7 +461,6 @@
             const t = prompt("Nome da Meta (Ex: Comprar Carro):");
             if(t) await db.collection("metas").add({title: t, done: false});
         }
-        
         function renderGoals() {
             document.getElementById('goals-list').innerHTML = state.goalsData.map(g => `
                 <div class="glass p-6 rounded-[30px] border border-white/5 relative group">
@@ -510,7 +482,6 @@
             });
             const badge = document.getElementById('runway-badge');
             const card = document.getElementById('survival-card');
-            
             if(saldoMes < 0) { badge.innerText = "ALERTA: DÉFICIT"; badge.className = "px-3 py-1 bg-red-500 rounded-lg text-[9px] font-black uppercase text-white"; card.classList.add('survival-danger'); }
             else if(saldoMes > 5000) { badge.innerText = "SOBERANIA"; badge.className = "px-3 py-1 bg-emerald-500 rounded-lg text-[9px] font-black uppercase text-white"; card.classList.add('survival-safe'); }
             else { badge.innerText = "ESTÁVEL"; badge.className = "px-3 py-1 bg-white/10 rounded-lg text-[9px] font-black uppercase text-slate-400"; card.classList.remove('survival-danger', 'survival-safe'); }
@@ -556,21 +527,74 @@
         function changeMonth(dir) { state.currentMonth += dir; if(state.currentMonth>11){state.currentMonth=0;state.currentYear++} if(state.currentMonth<0){state.currentMonth=11;state.currentYear--} renderFin(); updateSurvivalUI(); }
         async function deleteFin(id) { if(confirm("Apagar?")) await db.collection("financeiro").doc(id).delete(); }
 
-        // --- TASKS ---
+        // --- TASKS & HÁBITOS (ATUALIZADO) ---
         function changeDay(dir) { const d = new Date(state.selectedDate); d.setDate(d.getDate() + dir); state.selectedDate = d.toISOString().split('T')[0]; renderTasks(); }
         async function addTask() { const t=document.getElementById('task-in').value; if(t){ await db.collection("tarefas").add({text:t, done:false, date:state.selectedDate}); document.getElementById('task-in').value=''; } }
-        async function addHabit() { const h=document.getElementById('habit-in').value; if(h){ await db.collection("habitos").add({text:h, done:false, date:state.selectedDate}); document.getElementById('habit-in').value=''; } }
-        async function toggleCheck(col, id, status) { await db.collection(col).doc(id).update({done: status}); if(status) gainXP(col === 'tarefas' ? 10 : 20); }
+        
+        // Adicionar novo hábito à lista GLOBAL
+        async function addGlobalHabit() { 
+            const h = document.getElementById('habit-in').value; 
+            if(h){ 
+                const newList = [...state.globalHabits, h];
+                await db.collection("system_stats").doc("main").update({ globalHabits: newList }); 
+                document.getElementById('habit-in').value=''; 
+            } 
+        }
+
+        async function removeGlobalHabit(habitName) {
+            if(confirm("Deseja remover este hábito da sua rotina?")) {
+                const newList = state.globalHabits.filter(h => h !== habitName);
+                await db.collection("system_stats").doc("main").update({ globalHabits: newList }); 
+            }
+        }
+
+        async function toggleCheck(col, id, status) { await db.collection(col).doc(id).update({done: status}); if(status) gainXP(10); }
+
+        // Nova função para marcar hábito em um dia específico
+        async function toggleHabitLog(habitName, logId, status) {
+            if (logId) {
+                // Se já existe um log para hoje, atualiza
+                await db.collection("habitos_logs").doc(logId).update({done: status});
+            } else {
+                // Se não existe, cria
+                await db.collection("habitos_logs").add({text: habitName, done: status, date: state.selectedDate});
+            }
+            if(status) gainXP(20);
+        }
+
         function renderTasks() {
             const isToday = state.selectedDate === new Date().toISOString().split('T')[0];
             document.getElementById('task-date-display').innerText = isToday ? "HOJE" : state.selectedDate.split('-').reverse().join('/');
             document.getElementById('lock-status').innerText = isToday ? "EDITÁVEL" : "LEITURA";
+            
+            // Tarefas normais (vinculadas à data)
             const tasks = state.tasksData.filter(t => t.date === state.selectedDate);
-            const habits = state.habitsData.filter(h => h.date === state.selectedDate);
             document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 group ${isToday?'':'opacity-50 pointer-events-none'}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleCheck('tarefas','${t.id}',this.checked)" class="w-5 h-5 accent-blue-600 rounded cursor-pointer"><span class="flex-1 text-sm ${t.done?'line-through opacity-40':''}">${t.text}</span>${isToday?`<button onclick="db.collection('tarefas').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 text-xs">✕</button>`:''}</div>`).join('');
-            document.getElementById('habit-list').innerHTML = habits.map(h => `<div class="flex justify-between items-center p-2 hover:bg-white/5 rounded-lg group ${isToday?'':'opacity-50 pointer-events-none'}"><span class="text-xs font-bold text-slate-300 ${h.done?'text-emerald-400':''}">${h.text}</span><div class="flex gap-2"><button onclick="toggleCheck('habitos','${h.id}',!${h.done})" class="text-[10px] bg-slate-800 px-2 rounded hover:bg-slate-700">${h.done?'DESFAZER':'FEITO'}</button></div></div>`).join('');
-            const total = tasks.length + habits.length; const done = tasks.filter(t=>t.done).length + habits.filter(h=>h.done).length;
-            const perc = total > 0 ? Math.round((done/total)*100) : 0;
+
+            // Hábitos Globais (Aparecem todo dia, mas o check é por dia)
+            const habitsLogsToday = state.habitsLog.filter(h => h.date === state.selectedDate);
+            
+            document.getElementById('habit-list').innerHTML = state.globalHabits.map(habitName => {
+                // Verifica se já foi feito hoje
+                const log = habitsLogsToday.find(h => h.text === habitName);
+                const isDone = log ? log.done : false;
+                const logId = log ? log.id : null;
+
+                return `
+                <div class="flex justify-between items-center p-2 hover:bg-white/5 rounded-lg group ${isToday?'':'opacity-50 pointer-events-none'}">
+                    <span class="text-xs font-bold text-slate-300 ${isDone?'text-emerald-400':''}">${habitName}</span>
+                    <div class="flex gap-2 items-center">
+                        <button onclick="removeGlobalHabit('${habitName}')" class="text-slate-600 hover:text-red-500 mr-2 opacity-0 group-hover:opacity-100 transition">🗑️</button>
+                        <button onclick="toggleHabitLog('${habitName}', '${logId}', !${isDone})" class="text-[10px] px-3 py-1 rounded font-black uppercase transition ${isDone ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
+                            ${isDone ? 'FEITO' : 'FAZER'}
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const total = tasks.length + state.globalHabits.length; 
+            const doneCount = tasks.filter(t=>t.done).length + habitsLogsToday.filter(h=>h.done && state.globalHabits.includes(h.text)).length;
+            const perc = total > 0 ? Math.round((doneCount/total)*100) : 0;
             document.getElementById('progress-circle').style.strokeDashoffset = 351 - (351*perc)/100;
             document.getElementById('analytics-perc').innerText = `${perc}%`;
         }
