@@ -1,244 +1,284 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth">
+<html lang="pt-br" class="scroll-smooth dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VISÃO OS 5.0 TITANIUM</title>
+    <title>INVENTÁRIO VISÃO | LEONARDO</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { colors: { darkbg: '#020617', card: '#0f172a', accent: '#3b82f6' } } }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .tab-content { display: none; animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .tab-content.active { display: block; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Glass & Blur */
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); }
-        .dark .glass { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.05); }
-        .blur-secret { filter: blur(6px); transition: filter 0.3s; cursor: pointer; user-select: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f8fafc; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .blur-secret { filter: blur(8px); transition: 0.3s; cursor: pointer; }
         .blur-secret:hover { filter: blur(0); }
-
-        /* Timer Pulse */
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .timer-active { animation: pulse-red 2s infinite; }
-
-        /* Mobile Nav */
-        @media (max-width: 768px) {
-            .nav-mobile { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); border-top: 1px solid #e2e8f0; z-index: 50; display: flex; justify-content: space-around; padding-bottom: 20px; }
-            .dark .nav-mobile { background: rgba(2, 6, 23, 0.9); border-color: #1e293b; }
-            main { padding-bottom: 120px; }
-        }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        input, select { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
+        .nav-btn.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #60a5fa; }
+        
+        /* GOD MODE & UI EXTRAS */
+        .god-overlay { display: none; }
+        .god-overlay.open { display: flex; animation: fadeIn 0.1s ease-out; }
+        .survival-danger { border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .survival-safe { border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-darkbg dark:text-slate-100 transition-colors duration-500 selection:bg-blue-500 selection:text-white">
+<body class="min-h-screen pb-24 lg:pb-0">
 
-    <div id="login-page" class="fixed inset-0 z-[200] flex items-center justify-center bg-darkbg p-6">
-        <div class="glass w-full max-w-sm p-10 rounded-[40px] text-center shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-            <h1 class="text-4xl font-extrabold tracking-tighter mb-2">VISÃO 5.0</h1>
-            <p class="text-slate-400 text-xs uppercase tracking-widest mb-8">Titanium Edition</p>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="password" id="pass" placeholder="Acesso" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold text-center border focus:border-blue-500 transition-colors">
-                <button type="submit" class="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-black transition-transform active:scale-95">INICIAR SISTEMA</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="app-page" class="hidden min-h-screen flex flex-col md:flex-row">
-        
-        <nav class="hidden md:flex flex-col w-72 h-screen p-6 border-r border-slate-200 dark:border-slate-800 fixed bg-white/50 dark:bg-darkbg/50 backdrop-blur-md z-50">
-            <div class="mb-10 flex items-center gap-3 px-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black">V</div>
-                <span class="text-xl font-black italic tracking-tighter">VISÃO OS</span>
-            </div>
-            <div class="flex-1 space-y-2">
-                <button onclick="nav('dashboard', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 bg-blue-50 dark:bg-slate-800 text-blue-600">🏠 Dashboard</button>
-                <button onclick="nav('focus', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">🍅 Modo Foco</button>
-                <button onclick="nav('finance', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">💰 Financeiro</button>
-                <button onclick="nav('tasks', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">✅ Tarefas</button>
-                <button onclick="nav('vault', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">🔐 Cofre</button>
-            </div>
-            <div class="pt-6 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="exportData()" class="w-full p-3 rounded-xl font-bold text-xs uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-blue-500 flex items-center justify-center gap-2">💾 Backup Total</button>
-            </div>
-        </nav>
-
-        <div class="md:hidden nav-mobile">
-            <button onclick="nav('dashboard', this)" class="flex flex-col items-center justify-center text-blue-600 w-full"><span class="text-2xl">🏠</span></button>
-            <button onclick="nav('focus', this)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">🍅</span></button>
-            <button onclick="nav('finance', this)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">💰</span></button>
-            <button onclick="nav('tasks', this)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">✅</span></button>
-            <button onclick="nav('settings-mob', null)" class="flex flex-col items-center justify-center text-slate-400 w-full"><span class="text-2xl">☰</span></button>
-        </div>
-
-        <main class="flex-1 p-5 md:p-10 md:ml-72 max-w-7xl w-full mx-auto">
+    <div id="login-page" class="fixed inset-0 z-[1000] flex items-center justify-center bg-[#020617] p-6">
+        <div class="glass p-10 rounded-[40px] w-full max-w-sm text-center border-t border-blue-500/20 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+            <h1 class="text-3xl font-black tracking-tighter mb-1 text-white uppercase">Inventário Visão</h1>
+            <p class="text-slate-400 text-[10px] font-bold tracking-[0.4em] mb-8 uppercase">Acesso Restrito</p>
             
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h2 id="page-title" class="text-3xl font-extrabold tracking-tight">Visão Geral</h2>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 flex gap-2">
-                        <span id="date-display"></span> • <span id="time-display"></span>
-                    </p>
-                </div>
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <div class="relative flex-1 md:w-64">
-                        <input type="text" onkeyup="globalSearch(this.value)" placeholder="🔍 Buscar..." class="w-full bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
-                        <div id="search-box" class="hidden absolute top-14 left-0 w-full bg-white dark:bg-slate-900 shadow-2xl rounded-2xl p-2 z-50 border dark:border-slate-700 max-h-60 overflow-auto"></div>
-                    </div>
-                    <button onclick="togglePrivacy()" id="btn-priv" class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:scale-105 transition">👁️</button>
-                    <button onclick="toggleTheme()" class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:scale-105 transition">🌙</button>
-                </div>
-            </header>
+            <div class="space-y-4">
+                <input type="text" id="user" placeholder="USUÁRIO" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
+                <input type="password" id="pass" placeholder="SENHA" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
+            </div>
+            
+            <button onclick="handleLogin()" class="w-full bg-blue-600 mt-6 p-4 rounded-2xl font-black shadow-lg shadow-blue-900/40 hover:bg-blue-500 transition transform active:scale-95 text-xs tracking-widest uppercase">Decodificar</button>
+        </div>
+    </div>
 
-            <section id="dashboard" class="tab-content active">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="glass p-6 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/20">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">Saldo Mensal</p>
-                                <h3 id="dash-saldo" class="val-secret text-3xl font-black mt-1">R$ 0,00</h3>
-                            </div>
-                            <span class="text-2xl opacity-50">💰</span>
-                        </div>
-                        <div class="mt-6 flex gap-2">
-                            <span class="text-[10px] bg-white/20 px-2 py-1 rounded">Ent: <span id="dash-ent" class="val-secret">0</span></span>
-                            <span class="text-[10px] bg-white/20 px-2 py-1 rounded">Sai: <span id="dash-sai" class="val-secret">0</span></span>
-                        </div>
-                    </div>
-
-                    <div class="glass p-6 rounded-[32px] border-l-4 border-yellow-400">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Como você está?</p>
-                        <div class="flex justify-between mt-4">
-                            <button onclick="setMood('😡')" class="text-3xl hover:scale-125 transition">😡</button>
-                            <button onclick="setMood('😐')" class="text-3xl hover:scale-125 transition">😐</button>
-                            <button onclick="setMood('🙂')" class="text-3xl hover:scale-125 transition">🙂</button>
-                            <button onclick="setMood('🔥')" class="text-3xl hover:scale-125 transition">🔥</button>
-                        </div>
-                        <p id="last-mood" class="text-xs text-slate-400 mt-4 text-center font-bold">Hoje: -</p>
-                    </div>
-
-                    <div class="glass p-6 rounded-[32px]">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Acesso Rápido</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="https://web.whatsapp.com" target="_blank" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20 transition">
-                                <span class="text-green-500">💬</span> <span class="text-xs font-bold">WhatsApp</span>
-                            </a>
-                            <a href="https://chat.openai.com" target="_blank" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 transition">
-                                <span class="text-slate-500">🤖</span> <span class="text-xs font-bold">GPT</span>
-                            </a>
-                            <a href="https://mail.google.com" target="_blank" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                <span class="text-red-500">✉️</span> <span class="text-xs font-bold">Gmail</span>
-                            </a>
-                            <button onclick="nav('focus')" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-orange-50 transition">
-                                <span class="text-orange-500">🍅</span> <span class="text-xs font-bold">Focar</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <h3 class="font-bold text-slate-400 text-xs uppercase mb-4 tracking-widest">Atividades Recentes</h3>
-                <div id="dash-feed" class="space-y-3"></div>
-            </section>
-
-            <section id="focus" class="tab-content">
-                <div class="flex flex-col items-center justify-center py-10">
-                    <div class="relative">
-                        <div id="timer-ring" class="w-64 h-64 rounded-full border-8 border-slate-100 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-900 shadow-2xl">
-                            <h1 id="timer-display" class="text-6xl font-black tabular-nums text-slate-800 dark:text-white tracking-tighter">25:00</h1>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-4 mt-10">
-                        <button onclick="startTimer()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg hover:scale-105 transition">INICIAR</button>
-                        <button onclick="resetTimer()" class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-8 py-4 rounded-2xl font-black hover:bg-slate-300 transition">RESET</button>
-                    </div>
-
-                    <div class="mt-12 bg-orange-50 dark:bg-orange-900/20 p-6 rounded-2xl border border-orange-100 dark:border-orange-900/30 max-w-md w-full text-center">
-                        <p class="text-orange-600 dark:text-orange-400 font-bold text-sm">💡 Dica de Produtividade</p>
-                        <p class="text-slate-600 dark:text-slate-400 text-xs mt-2">Trabalhe focado por 25 minutos. Quando o timer zerar, levante-se, beba água e estique as pernas.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="finance" class="tab-content">
-                <div class="flex gap-3 mb-6">
-                    <button onclick="addFin('entrada')" class="flex-1 bg-green-500 text-white p-4 rounded-2xl font-black shadow-lg shadow-green-500/20 hover:scale-[1.02] transition">+ RECEITA</button>
-                    <button onclick="addFin('saida')" class="flex-1 bg-red-500 text-white p-4 rounded-2xl font-black shadow-lg shadow-red-500/20 hover:scale-[1.02] transition">- DESPESA</button>
-                </div>
-                
-                <div class="bg-white dark:bg-slate-800 rounded-[30px] p-6 shadow-sm mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg">Extrato</h3>
-                        <button onclick="addRecorrentes()" class="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-lg uppercase text-slate-500">Repetir Fixos</button>
-                    </div>
-                    <div id="fin-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scroll"></div>
-                </div>
-            </section>
-
-            <section id="tasks" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <h3 class="font-black text-slate-400 text-xs uppercase mb-4">Hábitos & Rotina</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="habit-input" placeholder="Novo hábito..." class="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
-                            <button onclick="addHabit()" class="bg-orange-500 text-white px-4 rounded-xl font-black">+</button>
-                        </div>
-                        <div id="habit-list" class="space-y-2"></div>
-                    </div>
-
-                    <div>
-                        <h3 class="font-black text-slate-400 text-xs uppercase mb-4">Tarefas de Hoje</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="task-input" placeholder="O que fazer hoje?" class="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm outline-none font-bold text-sm">
-                            <button onclick="addTask()" class="bg-blue-600 text-white px-4 rounded-xl font-black">+</button>
-                        </div>
-                        <div id="task-list" class="space-y-2"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="vault" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-yellow-50 dark:bg-yellow-900/10 p-6 rounded-[30px] border border-yellow-100 dark:border-yellow-900/30">
-                        <h3 class="font-black text-yellow-600 mb-4">📝 Notas Rápidas</h3>
-                        <button onclick="addNote()" class="w-full bg-white dark:bg-slate-800 py-3 rounded-xl font-bold text-xs shadow-sm mb-4">Nova Nota</button>
-                        <div id="note-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
-                    </div>
-
-                    <div class="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-[30px] border border-blue-100 dark:border-blue-900/30">
-                        <h3 class="font-black text-blue-600 mb-4">📂 Arquivos na Nuvem</h3>
-                        <button onclick="document.getElementById('up').click()" class="w-full bg-white dark:bg-slate-800 py-3 rounded-xl font-bold text-xs shadow-sm mb-4">Upload Arquivo</button>
-                        <input type="file" id="up" class="hidden" onchange="uploadFile(event)">
-                        <div id="file-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
-        
-        <div id="settings-mob" class="hidden fixed inset-0 bg-black/80 z-[60] p-6 flex flex-col justify-end" onclick="this.classList.add('hidden')">
-            <div class="bg-white dark:bg-slate-800 rounded-[30px] p-6 space-y-3">
-                <button onclick="nav('vault')" class="w-full p-4 text-left font-bold bg-slate-100 dark:bg-slate-700 rounded-2xl">🔐 Cofre & Notas</button>
-                <button onclick="togglePrivacy()" class="w-full p-4 text-left font-bold bg-slate-100 dark:bg-slate-700 rounded-2xl">👁️ Privacidade</button>
-                <button onclick="toggleTheme()" class="w-full p-4 text-left font-bold bg-slate-100 dark:bg-slate-700 rounded-2xl">🌙 Tema Escuro</button>
-                <button onclick="exportData()" class="w-full p-4 text-left font-bold bg-blue-100 dark:bg-blue-900 text-blue-600 rounded-2xl">💾 Baixar Meus Dados</button>
+    <div id="god-mode" class="god-overlay fixed inset-0 z-[2000] bg-black/90 backdrop-blur-sm items-center justify-center">
+        <div class="w-full max-w-2xl bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl p-6">
+            <input type="text" id="god-input" placeholder="Comando de Voz (Texto)... Ex: /t Pagar Luz" class="w-full bg-transparent text-2xl font-bold text-white outline-none border-none font-mono" autocomplete="off">
+            <div class="mt-4 flex gap-4 text-[10px] text-slate-500 font-mono uppercase">
+                <span>/t [tarefa]</span><span>/f [valor] [desc]</span><span>/n [nota]</span>
             </div>
         </div>
     </div>
+
+    <div id="xp-toast" class="fixed top-10 right-10 z-[3000] glass p-4 rounded-2xl flex items-center gap-4 transform translate-x-full transition-transform duration-500 border-l-4 border-yellow-400">
+        <span class="text-2xl">✨</span>
+        <div>
+            <p class="text-xs font-bold text-slate-400 uppercase">Progresso</p>
+            <p class="font-black text-white text-lg" id="xp-msg">+XP</p>
+        </div>
+    </div>
+
+    <nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 glass border-r border-white/5 p-6 z-50">
+        <div class="mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden group">
+            <div class="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000" id="xp-bar-visual" style="width: 0%"></div>
+            <div class="flex justify-between items-end mb-1">
+                <span class="text-xs font-bold text-slate-400">Nível <span id="lvl-display" class="text-white">1</span></span>
+                <span class="text-[10px] font-black text-blue-400" id="xp-display">0 XP</span>
+            </div>
+            <p class="text-[9px] text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition">Leonardo Pinto</p>
+        </div>
+
+        <div class="space-y-2 flex-1">
+            <button onclick="nav('dash', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📊 Dashboard</button>
+            <button onclick="nav('fin', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">💰 Financeiro</button>
+            <button onclick="nav('tasks', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">✅ Tarefas</button>
+            <button onclick="nav('focus', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🍅 Foco</button>
+            <button onclick="nav('vault', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🔐 Cofre</button>
+        </div>
+        
+        <div class="pt-6 border-t border-white/5">
+            <button onclick="generateReportIA()" class="w-full bg-emerald-600/10 text-emerald-400 p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 mb-2">🤖 Relatório IA</button>
+            <button onclick="exportData()" class="w-full text-slate-500 text-[9px] uppercase font-bold text-center">Backup Seguro</button>
+        </div>
+    </nav>
+
+    <main id="app-page" class="hidden lg:ml-72 p-6 lg:p-10 max-w-7xl mx-auto pb-32 lg:pb-12">
+        
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h2 id="view-title" class="text-3xl font-extrabold tracking-tight text-white uppercase">Visão Geral</h2>
+                <div class="flex gap-4 mt-1 items-center">
+                    <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded" id="date-now"></span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="togglePrivacy()" class="w-10 h-10 glass rounded-xl flex items-center justify-center text-lg hover:bg-white/10 transition" id="priv-btn">👁️</button>
+            </div>
+        </header>
+
+        <section id="dash" class="tab-content active space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div id="survival-card" class="glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 border-t border-white/5">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-blue-600/10 blur-[60px] rounded-full"></div>
+                    <div class="relative z-10">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Caixa & Sobrevivência</p>
+                        <h3 id="dash-saldo" class="text-4xl font-black blur-secret text-white">R$ 0,00</h3>
+                        <div class="mt-4 flex items-center justify-between">
+                            <span id="runway-badge" class="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black uppercase text-slate-400">Calculando...</span>
+                            <span class="text-2xl animate-pulse" id="survival-icon">🛡️</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass p-8 rounded-[35px] border-l-4 border-emerald-500">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Performance Diária</p>
+                    <div class="flex items-end gap-2 mb-2">
+                        <h3 id="dash-perf" class="text-4xl font-black text-emerald-400">0%</h3>
+                        <span class="text-xs text-slate-500 font-bold mb-2">eficiência</span>
+                    </div>
+                    <div class="w-full bg-slate-700/50 h-1.5 rounded-full overflow-hidden">
+                        <div id="perf-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="glass p-8 rounded-[35px] flex flex-col justify-center border-l-4 border-orange-500">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Status Leonardo</p>
+                    <div class="flex justify-between px-2">
+                        <button onclick="setMood('🔥')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🔥</button>
+                        <button onclick="setMood('🧠')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🧠</button>
+                        <button onclick="setMood('💤')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">💤</button>
+                    </div>
+                    <p id="last-mood" class="text-center text-[10px] font-bold text-slate-500 mt-4 uppercase">-</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="fin" class="tab-content space-y-6">
+            <div class="flex items-center justify-between glass p-2 rounded-2xl max-w-md mx-auto mb-8">
+                <button onclick="changeMonth(-1)" class="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 font-bold">❮</button>
+                <div class="text-center">
+                    <h3 id="month-label" class="font-black text-lg text-white uppercase tracking-widest">JANEIRO</h3>
+                    <p id="year-label" class="text-[10px] font-bold text-blue-500">2026</p>
+                </div>
+                <button onclick="changeMonth(1)" class="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 font-bold">❯</button>
+            </div>
+
+            <div class="glass p-8 rounded-[40px] border border-blue-500/10">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div class="md:col-span-5 space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-2">Descrição</label>
+                        <input type="text" id="fin-desc" placeholder="Ex: Equipamento Novo" class="w-full p-3 rounded-xl text-sm font-bold">
+                    </div>
+                    <div class="md:col-span-3 space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-2">Valor Total</label>
+                        <input type="number" id="fin-val" placeholder="0.00" class="w-full p-3 rounded-xl text-sm font-bold">
+                    </div>
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-2">Parcelas (Nº)</label>
+                        <input type="number" id="fin-parc" placeholder="1" value="1" min="1" class="w-full p-3 rounded-xl text-sm font-bold">
+                    </div>
+                    <div class="md:col-span-2 flex gap-2">
+                        <button onclick="saveFin('entrada')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl font-bold text-xl">+</button>
+                        <button onclick="saveFin('saida')" class="flex-1 bg-red-600 hover:bg-red-500 text-white p-3 rounded-xl font-bold text-xl">-</button>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4 ml-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="fin-recur" class="w-4 h-4 accent-blue-500 rounded">
+                        <span class="text-xs font-bold text-slate-400">Despesa Fixa / Recorrente?</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="glass rounded-[40px] overflow-hidden min-h-[300px]">
+                <div class="bg-white/5 p-4 flex justify-between items-center border-b border-white/5">
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Extrato Projetado</span>
+                    <span id="month-balance" class="text-xs font-bold text-white bg-slate-800 px-3 py-1 rounded-lg">R$ 0,00</span>
+                </div>
+                <div id="fin-list" class="divide-y divide-white/5 max-h-[500px] overflow-y-auto custom-scroll p-2"></div>
+            </div>
+        </section>
+
+        <section id="tasks" class="tab-content space-y-8">
+            <div class="flex items-center justify-center gap-4 mb-4">
+                <button onclick="changeDay(-1)" class="p-2 glass rounded-xl hover:bg-white/10">◀</button>
+                <div class="text-center">
+                    <span id="task-date-display" class="font-black text-white text-lg block">HOJE</span>
+                    <span id="lock-status" class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">EDITÁVEL</span>
+                </div>
+                <button onclick="changeDay(1)" class="p-2 glass rounded-xl hover:bg-white/10">▶</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass p-2 rounded-[25px] flex gap-2 items-center pr-4 border-blue-500/20 task-input-area">
+                        <input type="text" id="task-in" placeholder="Adicionar Tarefa..." class="flex-1 bg-transparent border-none shadow-none p-4 text-sm font-bold focus:ring-0">
+                        <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl font-bold flex items-center justify-center transition shadow-lg shadow-blue-900/30">+</button>
+                    </div>
+                    <div id="task-list" class="space-y-3"></div>
+                    
+                    <div class="glass p-6 rounded-[35px] border-t-2 border-orange-500/20 mt-8">
+                        <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Hábitos Diários</h4>
+                        <div id="habit-list" class="space-y-2"></div>
+                        <div class="flex gap-2 mt-4 task-input-area">
+                            <input type="text" id="habit-in" placeholder="Novo Hábito..." class="flex-1 bg-slate-900 p-2 rounded-lg text-xs font-bold">
+                            <button onclick="addHabit()" class="bg-slate-700 px-3 rounded-lg font-bold text-xs">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass p-8 rounded-[40px] h-fit sticky top-6">
+                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Performance</h4>
+                    <div class="flex justify-center mb-8 relative">
+                        <svg class="w-32 h-32 transform -rotate-90">
+                            <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none" />
+                            <circle id="progress-circle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="351" stroke-dashoffset="351" class="transition-all duration-1000 ease-out" />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center flex-col">
+                            <span id="analytics-perc" class="text-2xl font-black text-white">0%</span>
+                            <span class="text-[8px] uppercase font-bold text-slate-500">Score</span>
+                        </div>
+                    </div>
+                    <button onclick="finalizeDay()" class="w-full bg-slate-800 hover:bg-slate-700 p-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-white/10 transition">Finalizar Dia (+XP)</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="focus" class="tab-content">
+            <div class="flex flex-col items-center justify-center min-h-[60vh]">
+                <div class="relative mb-10 group">
+                    <div class="absolute inset-0 bg-blue-600/20 blur-[80px] rounded-full group-hover:bg-blue-600/30 transition duration-700"></div>
+                    <div id="pomo-ring" class="relative w-80 h-80 rounded-full border-[12px] border-white/5 bg-[#020617] flex items-center justify-center shadow-2xl">
+                        <span id="timer-display" class="text-8xl font-black text-white tabular-nums tracking-tighter">25:00</span>
+                    </div>
+                </div>
+                <div class="flex gap-6">
+                    <button onclick="startPomo()" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-3xl font-black shadow-lg shadow-blue-900/40 transition hover:-translate-y-1 tracking-widest">START</button>
+                    <button onclick="resetPomo()" class="bg-white/5 hover:bg-white/10 text-slate-300 px-12 py-5 rounded-3xl font-black border border-white/5 transition tracking-widest">RESET</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="vault" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass p-8 rounded-[40px]">
+                    <h4 class="font-black mb-6 text-sm text-yellow-500">📝 Notas</h4>
+                    <textarea id="note-in" class="w-full bg-slate-900/50 p-4 rounded-2xl h-32 outline-none mb-4 text-sm font-medium resize-none border border-white/5"></textarea>
+                    <button onclick="saveNote()" class="w-full bg-yellow-600/10 text-yellow-500 hover:bg-yellow-600 hover:text-white p-3 rounded-xl font-black text-xs transition">SALVAR</button>
+                    <div id="note-list" class="mt-6 space-y-3 max-h-60 overflow-y-auto custom-scroll"></div>
+                </div>
+                <div class="glass p-8 rounded-[40px]">
+                    <h4 class="font-black mb-6 text-sm text-blue-500">📂 Arquivos</h4>
+                    <input type="file" id="file-up" onchange="uploadFile(event)" class="hidden">
+                    <div onclick="document.getElementById('file-up').click()" class="w-full h-32 bg-slate-900/50 border-2 border-dashed border-blue-500/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 transition">
+                        <span class="text-2xl mb-2">☁️</span>
+                        <span class="text-[10px] font-bold uppercase text-slate-500">Upload</span>
+                    </div>
+                    <div id="file-list" class="mt-6 space-y-3 max-h-60 overflow-y-auto custom-scroll"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="lg:hidden fixed bottom-6 left-6 right-6 h-20 glass rounded-[30px] z-[90] flex items-center justify-around px-4 border border-white/10 shadow-2xl backdrop-blur-xl bg-[#0f172a]/80">
+        <button onclick="nav('dash')" class="text-2xl opacity-60">📊</button>
+        <button onclick="nav('fin')" class="text-2xl opacity-60">💰</button>
+        <button onclick="nav('tasks')" class="text-2xl opacity-60">✅</button>
+        <button onclick="nav('focus')" class="text-2xl opacity-60">🍅</button>
+        <button onclick="nav('vault')" class="text-2xl opacity-60">🔐</button>
+    </nav>
 
     <script>
-        // --- 1. CONFIGURAÇÃO ---
+        // CONFIG FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
             authDomain: "inventario-visao.firebaseapp.com",
@@ -251,187 +291,167 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        let appData = { tasks: [], fin: [], notes: [], files: [], habits: [], mood: [] };
-        let privacy = false;
-        let timerInterval = null;
-        let timeLeft = 25 * 60;
-        const hoje = new Date().toLocaleDateString('pt-BR');
+        // ESTADO GLOBAL
+        let state = {
+            view: 'dash',
+            privacy: false,
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear(),
+            selectedDate: new Date().toISOString().split('T')[0],
+            finData: [], tasksData: [], habitsData: [], notesData: [], filesData: [],
+            xp: 0, level: 1, pomoTime: 25 * 60, pomoInterval: null
+        };
 
-        // Relógio
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('time-display').innerText = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-            document.getElementById('date-display').innerText = hoje;
-        }, 1000);
+        const mesesStr = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-        // --- 2. AUTH & CORE ---
-        function handleLogin(e) {
-            e.preventDefault();
-            if(document.getElementById('pass').value === "lnventario2026") {
+        // GOD MODE KEYS
+        document.addEventListener('keydown', (e) => {
+            if((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleGodMode(); }
+            if(e.key === 'Escape') document.getElementById('god-mode').classList.remove('open');
+            if(document.getElementById('god-mode').classList.contains('open') && e.key === 'Enter') executeGodCommand();
+        });
+
+        // LOGIN DO LEONARDO
+        function handleLogin() {
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+            
+            if(user === "leonardo" && pass === "pinto2026") {
                 document.getElementById('login-page').style.display = 'none';
                 document.getElementById('app-page').classList.remove('hidden');
-                initSystem();
-            } else alert("Senha Incorreta");
-        }
-
-        function initSystem() {
-            // Listeners
-            db.collection("tarefas_hoje").onSnapshot(s => { appData.tasks = s.docs.map(d=>({id:d.id,...d.data()})); renderTasks(); });
-            db.collection("financeiro").orderBy("createdAt", "desc").onSnapshot(s => { appData.fin = s.docs.map(d=>({id:d.id,...d.data()})); renderFin(); });
-            db.collection("habitos").onSnapshot(s => { appData.habits = s.docs.map(d=>({id:d.id,...d.data()})); renderHabits(); });
-            db.collection("notas").orderBy("createdAt", "desc").onSnapshot(s => { appData.notes = s.docs.map(d=>({id:d.id,...d.data()})); renderVault(); });
-            db.collection("arquivos").orderBy("createdAt", "desc").onSnapshot(s => { appData.files = s.docs.map(d=>({id:d.id,...d.data()})); renderVault(); });
-            db.collection("humor").orderBy("date", "desc").limit(1).onSnapshot(s => { if(!s.empty) document.getElementById('last-mood').innerText = `Hoje: ${s.docs[0].data().emoji}`; });
-        }
-
-        // --- 3. UI & NAVEGAÇÃO ---
-        function nav(id, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            // Mobile Menu Close
-            document.getElementById('settings-mob').classList.add('hidden');
-
-            // Titles
-            const titles = { dashboard: 'Visão Geral', focus: 'Modo Foco', finance: 'Controle', tasks: 'Planejamento', vault: 'Cofre Digital' };
-            document.getElementById('page-title').innerText = titles[id];
-
-            // Buttons State
-            if(btn) {
-                document.querySelectorAll('.nav-btn').forEach(b => {
-                    b.classList.remove('bg-blue-50', 'dark:bg-slate-800', 'text-blue-600', 'dark:text-blue-400');
-                    b.classList.add('text-slate-500');
-                });
-                btn.classList.remove('text-slate-500');
-                btn.classList.add('bg-blue-50', 'dark:bg-slate-800', 'text-blue-600', 'dark:text-blue-400');
+                document.querySelector('nav').classList.remove('hidden');
+                init();
+            } else {
+                alert("Acesso Negado: Credenciais Incorretas.");
             }
         }
 
-        function togglePrivacy() {
-            privacy = !privacy;
-            document.querySelectorAll('.val-secret').forEach(el => privacy ? el.classList.add('blur-secret') : el.classList.remove('blur-secret'));
-            document.getElementById('btn-priv').innerText = privacy ? '🙈' : '👁️';
+        function init() {
+            db.collection("financeiro").onSnapshot(s => { state.finData = s.docs.map(d => ({id:d.id,...d.data()})); renderFin(); updateSurvivalUI(); });
+            db.collection("tarefas").onSnapshot(s => { state.tasksData = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
+            db.collection("habitos").onSnapshot(s => { state.habitsData = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
+            db.collection("notas").orderBy("created", "desc").onSnapshot(s => { state.notesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
+            db.collection("arquivos").orderBy("created", "desc").onSnapshot(s => { state.filesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
+            db.collection("system_stats").doc("main").onSnapshot(d => { if(d.exists) { state.xp = d.data().xp || 0; state.level = d.data().level || 1; updateXPUI(); } });
+            updateDate();
         }
 
-        function toggleTheme() { document.documentElement.classList.toggle('dark'); }
-
-        // --- 4. FUNCIONALIDADES ---
-        
-        // Pomodoro
-        function startTimer() {
-            if(timerInterval) return;
-            document.getElementById('timer-ring').classList.add('timer-active');
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                const s = (timeLeft % 60).toString().padStart(2, '0');
-                document.getElementById('timer-display').innerText = `${m}:${s}`;
-                if(timeLeft <= 0) { resetTimer(); alert("Tempo esgotado! Descanse."); }
-            }, 1000);
+        // --- XP & GAME ---
+        function gainXP(amount) {
+            state.xp += amount;
+            if(state.xp >= state.level * 500) { state.level++; state.xp = 0; showToast(`Nível ${state.level} Alcançado!`); } else { showToast(`+${amount} XP`); }
+            db.collection("system_stats").doc("main").set({xp: state.xp, level: state.level}, {merge: true});
+            updateXPUI();
         }
-        function resetTimer() {
-            clearInterval(timerInterval); timerInterval = null; timeLeft = 25*60;
-            document.getElementById('timer-display').innerText = "25:00";
-            document.getElementById('timer-ring').classList.remove('timer-active');
+        function updateXPUI() {
+            document.getElementById('lvl-display').innerText = state.level;
+            document.getElementById('xp-display').innerText = `${state.xp} / ${state.level*500} XP`;
+            document.getElementById('xp-bar-visual').style.width = `${(state.xp / (state.level * 500)) * 100}%`;
+        }
+        function showToast(msg) {
+            const t = document.getElementById('xp-toast'); document.getElementById('xp-msg').innerText = msg;
+            t.classList.remove('translate-x-full'); setTimeout(() => t.classList.add('translate-x-full'), 3000);
         }
 
-        // Mood
-        async function setMood(emoji) {
-            await db.collection("humor").add({ emoji, date: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-
-        // Search
-        function globalSearch(q) {
-            const box = document.getElementById('search-box');
-            if(!q) { box.classList.add('hidden'); return; }
-            box.classList.remove('hidden');
-            const term = q.toLowerCase();
-            let html = '';
+        // --- SURVIVAL ---
+        function updateSurvivalUI() {
+            let saldoMes = 0;
+            state.finData.forEach(f => {
+                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
+                const val = f.recorrente ? f.valorTotal : (f.valorTotal / f.parcelas);
+                if(f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas) { f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val; }
+            });
             
-            appData.notes.forEach(n => { if(n.text.toLowerCase().includes(term)) html += `<div onclick="nav('vault')" class="p-2 border-b dark:border-slate-800 hover:bg-slate-50 cursor-pointer"><span class="text-xs font-bold text-yellow-500">NOTA</span> <span class="text-xs dark:text-slate-300">${n.text.substring(0,30)}...</span></div>`});
-            appData.fin.forEach(f => { if(f.desc.toLowerCase().includes(term)) html += `<div onclick="nav('finance')" class="p-2 border-b dark:border-slate-800 hover:bg-slate-50 cursor-pointer"><span class="text-xs font-bold text-green-500">FIN</span> <span class="text-xs dark:text-slate-300">${f.desc} - R$${f.valor}</span></div>`});
+            const card = document.getElementById('survival-card');
+            const badge = document.getElementById('runway-badge');
             
-            box.innerHTML = html || '<p class="text-xs text-center p-2 text-slate-400">Nada encontrado.</p>';
+            // Simulação de "Runway" baseada no saldo
+            if(saldoMes < 0) { card.className = "glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 survival-danger"; badge.innerText = "CRISE IMEDIATA"; badge.className = "px-3 py-1 bg-red-500 rounded-lg text-[9px] font-black uppercase text-white"; }
+            else if (saldoMes > 5000) { card.className = "glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 survival-safe"; badge.innerText = "SOBERANIA"; badge.className = "px-3 py-1 bg-emerald-500 rounded-lg text-[9px] font-black uppercase text-white"; }
+            else { card.className = "glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500"; badge.innerText = "ESTÁVEL"; badge.className = "px-3 py-1 bg-white/10 rounded-lg text-[9px] font-black uppercase text-slate-400"; }
+            
+            document.getElementById('dash-saldo').innerText = `R$ ${saldoMes.toFixed(2)}`;
         }
 
-        // Backup
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
-            const node = document.createElement('a');
-            node.setAttribute("href", dataStr);
-            node.setAttribute("download", `visao_backup_${Date.now()}.json`);
-            document.body.appendChild(node); node.click(); node.remove();
+        // --- GOD MODE ---
+        function toggleGodMode() { document.getElementById('god-mode').classList.toggle('open'); const i = document.getElementById('god-input'); if(document.getElementById('god-mode').classList.contains('open')) i.focus(); else i.value=''; }
+        function executeGodCommand() {
+            const v = document.getElementById('god-input').value; const cmd = v.split(' ')[0]; const c = v.substring(cmd.length + 1);
+            if(cmd === '/t') { db.collection("tarefas").add({text: c, done: false, date: state.selectedDate}); showToast("Tarefa Criada"); }
+            if(cmd === '/n') { db.collection("notas").add({text: c, created: new Date()}); showToast("Nota Criada"); }
+            toggleGodMode();
         }
 
-        // --- 5. RENDERIZAÇÃO ---
-        
+        // --- FINANCEIRO FLEX ---
+        async function saveFin(tipo) {
+            const desc = document.getElementById('fin-desc').value;
+            const valorTotal = parseFloat(document.getElementById('fin-val').value);
+            const parcInput = parseInt(document.getElementById('fin-parc').value);
+            const recur = document.getElementById('fin-recur').checked;
+            
+            if(!desc || !valorTotal) return alert("Preencha!");
+            
+            let parcelas = recur ? 12 : (parcInput > 0 ? parcInput : 1);
+            
+            await db.collection("financeiro").add({desc, valorTotal, parcelas, recorrente: recur, tipo, mesIn: state.currentMonth, anoIn: state.currentYear, created: new Date()});
+            gainXP(15); document.getElementById('fin-desc').value = ''; document.getElementById('fin-val').value = '';
+        }
+
         function renderFin() {
-            let ent=0, sai=0;
-            const mesAtual = new Date().getMonth();
-            document.getElementById('fin-list').innerHTML = appData.fin.map(f => {
-                const val = f.valor / f.parcelas;
-                if(f.mes === mesAtual) f.tipo === 'entrada' ? ent+=f.valor : sai+=val;
-                return `
-                <div class="flex justify-between items-center p-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
-                    <div><p class="font-bold text-sm dark:text-slate-200">${f.desc}</p><p class="text-[10px] text-slate-400 uppercase">${f.cat || 'Geral'}</p></div>
-                    <div class="text-right">
-                        <p class="val-secret font-bold ${f.tipo==='entrada'?'text-green-500':'text-red-500'}">R$ ${val.toFixed(2)}</p>
-                        <button onclick="db.collection('financeiro').doc('${f.id}').delete()" class="text-[9px] text-red-300 hover:text-red-500">APAGAR</button>
-                    </div>
-                </div>`;
+            document.getElementById('month-label').innerText = mesesStr[state.currentMonth];
+            document.getElementById('year-label').innerText = state.currentYear;
+            let saldoMes = 0;
+            const filtrados = state.finData.filter(f => {
+                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
+                return f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas;
+            });
+            document.getElementById('fin-list').innerHTML = filtrados.map(f => {
+                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
+                const val = f.recorrente ? f.valorTotal : (f.valorTotal/f.parcelas);
+                f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val;
+                return `<div class="p-4 flex justify-between items-center hover:bg-white/5 transition rounded-xl"><div><p class="font-bold text-sm text-white">${f.desc}</p><p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-0.5">${f.recorrente?'🔄 RECORRENTE':`PARCELA ${diff+1}/${f.parcelas}`}</p></div><div class="text-right"><p class="font-bold ${f.tipo==='entrada'?'text-emerald-400':'text-red-400'} blur-secret text-sm">R$ ${val.toFixed(2)}</p><button onclick="deleteFin('${f.id}')" class="text-[8px] text-slate-600 hover:text-red-500 uppercase font-black">x</button></div></div>`;
             }).join('');
-            
-            document.getElementById('dash-saldo').innerText = `R$ ${(ent-sai).toFixed(2)}`;
-            document.getElementById('dash-ent').innerText = `R$ ${ent.toFixed(2)}`;
-            document.getElementById('dash-sai').innerText = `R$ ${sai.toFixed(2)}`;
-            if(privacy) togglePrivacy(); // Reapply blur
+            document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2)}`;
         }
+        function changeMonth(dir) { state.currentMonth += dir; if(state.currentMonth>11){state.currentMonth=0;state.currentYear++} if(state.currentMonth<0){state.currentMonth=11;state.currentYear--} renderFin(); updateSurvivalUI(); }
+        async function deleteFin(id) { if(confirm("Apagar?")) await db.collection("financeiro").doc(id).delete(); }
 
+        // --- TASKS ---
+        function changeDay(dir) { const d = new Date(state.selectedDate); d.setDate(d.getDate() + dir); state.selectedDate = d.toISOString().split('T')[0]; renderTasks(); }
+        async function addTask() { const t=document.getElementById('task-in').value; if(t){ await db.collection("tarefas").add({text:t, done:false, date:state.selectedDate}); document.getElementById('task-in').value=''; } }
+        async function addHabit() { const h=document.getElementById('habit-in').value; if(h){ await db.collection("habitos").add({text:h, done:false, date:state.selectedDate}); document.getElementById('habit-in').value=''; } }
+        async function toggleCheck(col, id, status) { await db.collection(col).doc(id).update({done: status}); if(status) gainXP(col === 'tarefas' ? 10 : 20); }
+        
         function renderTasks() {
-            document.getElementById('task-list').innerHTML = appData.tasks.map(t => `
-                <div class="group flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-transparent hover:border-blue-200 transition">
-                    <input type="checkbox" ${t.done?'checked':''} onchange="db.collection('tarefas_hoje').doc('${t.id}').update({done:this.checked})" class="w-5 h-5 accent-blue-600 rounded">
-                    <span class="flex-1 font-bold text-sm dark:text-slate-200 ${t.done?'line-through text-slate-400':''}">${t.text}</span>
-                    <button onclick="db.collection('tarefas_hoje').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 font-bold px-2">✕</button>
-                </div>`).join('');
+            const isToday = state.selectedDate === new Date().toISOString().split('T')[0];
+            document.getElementById('task-date-display').innerText = isToday ? "HOJE" : state.selectedDate.split('-').reverse().join('/');
+            document.getElementById('lock-status').innerText = isToday ? "EDITÁVEL" : "LEITURA";
+            const tasks = state.tasksData.filter(t => t.date === state.selectedDate);
+            const habits = state.habitsData.filter(h => h.date === state.selectedDate);
+            
+            document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 group ${isToday?'':'opacity-50 pointer-events-none'}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleCheck('tarefas','${t.id}',this.checked)" class="w-5 h-5 accent-blue-600 rounded cursor-pointer"><span class="flex-1 text-sm ${t.done?'line-through opacity-40':''}">${t.text}</span>${isToday?`<button onclick="db.collection('tarefas').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 text-xs">x</button>`:''}</div>`).join('');
+            document.getElementById('habit-list').innerHTML = habits.map(h => `<div class="flex justify-between items-center p-2 hover:bg-white/5 rounded-lg group ${isToday?'':'opacity-50 pointer-events-none'}"><span class="text-xs font-bold text-slate-300 ${h.done?'text-emerald-400':''}">${h.text}</span><div class="flex gap-2"><button onclick="toggleCheck('habitos','${h.id}',!${h.done})" class="text-[10px] bg-slate-800 px-2 rounded hover:bg-slate-700">${h.done?'DESFAZER':'FEITO'}</button></div></div>`).join('');
+            
+            const total = tasks.length + habits.length; const done = tasks.filter(t=>t.done).length + habits.filter(h=>h.done).length;
+            const perc = total > 0 ? Math.round((done/total)*100) : 0;
+            document.getElementById('progress-circle').style.strokeDashoffset = 351 - (351*perc)/100;
+            document.getElementById('analytics-perc').innerText = `${perc}%`;
+            if(isToday) { document.getElementById('dash-perf').innerText = `${perc}%`; document.getElementById('perf-bar').style.width = `${perc}%`; }
         }
+        function finalizeDay() { if(confirm("Finalizar dia?")) { gainXP(100); alert("Dia Finalizado! +100 XP"); } }
 
-        function renderHabits() {
-            document.getElementById('habit-list').innerHTML = appData.habits.map(h => {
-                const done = h.history && h.history.includes(hoje);
-                return `
-                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-xl ${done?'border-l-4 border-orange-500':''}">
-                    <div><p class="font-bold text-sm dark:text-slate-200">${h.name}</p><p class="text-[10px] text-slate-400">🔥 ${h.streak||0} dias</p></div>
-                    ${!done ? `<button onclick="checkHabit('${h.id}', ${h.streak||0})" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-xs font-bold hover:bg-orange-500 hover:text-white transition">FEITO</button>` : '<span class="text-green-500 text-lg">✔</span>'}
-                    <button onclick="db.collection('habitos').doc('${h.id}').delete()" class="text-slate-300 text-[10px] ml-2">x</button>
-                </div>`;
-            }).join('');
-        }
-
-        function renderVault() {
-            document.getElementById('note-list').innerHTML = appData.notes.map(n => `<div class="bg-white dark:bg-slate-900 p-3 rounded-xl text-xs font-bold shadow-sm relative group dark:text-slate-300">${n.text}<button onclick="db.collection('notas').doc('${n.id}').delete()" class="absolute top-1 right-2 text-red-300 opacity-0 group-hover:opacity-100">x</button></div>`).join('');
-            document.getElementById('file-list').innerHTML = appData.files.map(f => `<div class="bg-white dark:bg-slate-900 p-3 rounded-xl flex justify-between items-center shadow-sm"><span class="text-xs font-bold truncate w-32 dark:text-slate-300">${f.name}</span><a href="${f.url}" target="_blank" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded">ABRIR</a></div>`).join('');
-        }
-
-        // --- 6. ADDERS ---
-        async function addTask() { const t=document.getElementById('task-input').value; if(t) await db.collection('tarefas_hoje').add({text:t, done:false}); document.getElementById('task-input').value=''; }
-        async function addHabit() { const t=document.getElementById('habit-input').value; if(t) await db.collection('habitos').add({name:t, streak:0, history:[]}); document.getElementById('habit-input').value=''; }
-        async function checkHabit(id, streak) { await db.collection('habitos').doc(id).update({streak:streak+1, history: firebase.firestore.FieldValue.arrayUnion(hoje)}); }
-        async function addNote() { const t=prompt("Nota:"); if(t) await db.collection('notas').add({text:t, createdAt: firebase.firestore.FieldValue.serverTimestamp()}); }
-        async function uploadFile(e) { const f=e.target.files[0]; if(!f)return; const r=storage.ref(`arquivos/${Date.now()}_${f.name}`); await r.put(f); const u=await r.getDownloadURL(); await db.collection('arquivos').add({name:f.name, url:u, createdAt: firebase.firestore.FieldValue.serverTimestamp()}); }
-        async function addFin(tipo) {
-            const desc = prompt("Descrição:"); const val = parseFloat(prompt("Valor:"));
-            if(desc && val) await db.collection("financeiro").add({desc, valor:val, tipo, parcelas:1, mes:new Date().getMonth(), cat: 'Geral', createdAt: firebase.firestore.FieldValue.serverTimestamp()});
-        }
-        async function addRecorrentes() {
-            if(confirm("Lançar gastos fixos?")) {
-                const batch = db.batch();
-                [{desc:"Aluguel",valor:1000},{desc:"Net",valor:100}].forEach(i => { // EDITE SEUS FIXOS AQUI
-                    batch.set(db.collection("financeiro").doc(), {...i, tipo:'saida', parcelas:1, mes:new Date().getMonth(), cat:'Fixo', createdAt: firebase.firestore.FieldValue.serverTimestamp()});
-                });
-                await batch.commit();
-            }
-        }
+        // --- UTIL ---
+        function startPomo(){ if(state.pomoInterval)return; state.pomoInterval=setInterval(()=>{ state.pomoTime--; const m=Math.floor(state.pomoTime/60).toString().padStart(2,'0'); const s=(state.pomoTime%60).toString().padStart(2,'0'); document.getElementById('timer-display').innerText=`${m}:${s}`; if(state.pomoTime<=0){resetPomo(); gainXP(50); alert("Foco!");} },1000); }
+        function resetPomo(){ clearInterval(state.pomoInterval); state.pomoInterval=null; state.pomoTime=25*60; document.getElementById('timer-display').innerText="25:00"; }
+        async function saveNote(){ const t=document.getElementById('note-in').value; if(t){ await db.collection("notas").add({text:t, created:new Date()}); document.getElementById('note-in').value=''; gainXP(5); } }
+        async function uploadFile(e){ const f=e.target.files[0]; const ref=storage.ref(`v9/${Date.now()}_${f.name}`); await ref.put(f); const u=await ref.getDownloadURL(); await db.collection("arquivos").add({name:f.name, url:u, created:new Date()}); gainXP(10); }
+        function renderVault(){ document.getElementById('note-list').innerHTML=state.notesData.map(n=>`<div class="p-3 bg-slate-900/50 border border-white/5 rounded-xl text-xs text-slate-300 relative group">${n.text}<button onclick="db.collection('notas').doc('${n.id}').delete()" class="absolute top-1 right-2 text-red-500 opacity-0 group-hover:opacity-100">x</button></div>`).join(''); document.getElementById('file-list').innerHTML=state.filesData.map(f=>`<a href="${f.url}" target="_blank" class="block p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400 truncate hover:bg-blue-500/20 transition">${f.name}</a>`).join(''); }
+        function nav(id, btn){ document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(id).classList.add('active'); if(btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');} document.getElementById('view-title').innerText=id==='dash'?'Visão Geral':id.toUpperCase(); }
+        function togglePrivacy(){ state.privacy=!state.privacy; document.querySelectorAll('.blur-secret').forEach(el=>state.privacy?el.classList.add('blur-secret'):el.classList.remove('blur-secret')); }
+        function updateDate(){ const n=new Date(); document.getElementById('date-now').innerText=n.toLocaleDateString('pt-br',{weekday:'short',day:'2-digit',month:'short'}); }
+        async function setMood(emoji){ await db.collection("humor").add({emoji, date: new Date()}); gainXP(5); }
+        function generateReportIA() { const prompt = `RELATÓRIO LEONARDO 9.0: Saldo: ${document.getElementById('dash-saldo').innerText}. Score: ${document.getElementById('analytics-perc').innerText}. Nível: ${state.level}. Analise e me dê 3 ordens.`; navigator.clipboard.writeText(prompt); alert("Prompt Copiado!"); }
+        function exportData(){ const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state)); const n=document.createElement('a'); n.href=s; n.download=`backup_leo_${Date.now()}.json`; document.body.appendChild(n); n.click(); n.remove(); }
     </script>
 </body>
 </html>
