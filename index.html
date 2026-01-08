@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTÁRIO VISÃO | LEONARDO</title>
+    <title>VISÃO OS 10.0 | LEONARDO</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -25,7 +24,9 @@
         input, select { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .nav-btn.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #60a5fa; }
         
-        /* GOD MODE & UI EXTRAS */
+        /* Progress Bar Animation for Tree */
+        .tree-progress { transition: stroke-dashoffset 1.5s ease-in-out; }
+        
         .god-overlay { display: none; }
         .god-overlay.open { display: flex; animation: fadeIn 0.1s ease-out; }
         .survival-danger { border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
@@ -38,20 +39,18 @@
         <div class="glass p-10 rounded-[40px] w-full max-w-sm text-center border-t border-blue-500/20 shadow-2xl relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
             <h1 class="text-3xl font-black tracking-tighter mb-1 text-white uppercase">Inventário Visão</h1>
-            <p class="text-slate-400 text-[10px] font-bold tracking-[0.4em] mb-8 uppercase">Acesso Restrito</p>
-            
+            <p class="text-slate-400 text-[10px] font-bold tracking-[0.4em] mb-8 uppercase">Acesso Leonardo</p>
             <div class="space-y-4">
                 <input type="text" id="user" placeholder="USUÁRIO" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
                 <input type="password" id="pass" placeholder="SENHA" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
             </div>
-            
             <button onclick="handleLogin()" class="w-full bg-blue-600 mt-6 p-4 rounded-2xl font-black shadow-lg shadow-blue-900/40 hover:bg-blue-500 transition transform active:scale-95 text-xs tracking-widest uppercase">Decodificar</button>
         </div>
     </div>
 
     <div id="god-mode" class="god-overlay fixed inset-0 z-[2000] bg-black/90 backdrop-blur-sm items-center justify-center">
         <div class="w-full max-w-2xl bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl p-6">
-            <input type="text" id="god-input" placeholder="Comando de Voz (Texto)... Ex: /t Pagar Luz" class="w-full bg-transparent text-2xl font-bold text-white outline-none border-none font-mono" autocomplete="off">
+            <input type="text" id="god-input" placeholder="Comando... (Ex: /t Pagar Luz)" class="w-full bg-transparent text-2xl font-bold text-white outline-none border-none font-mono" autocomplete="off">
             <div class="mt-4 flex gap-4 text-[10px] text-slate-500 font-mono uppercase">
                 <span>/t [tarefa]</span><span>/f [valor] [desc]</span><span>/n [nota]</span>
             </div>
@@ -60,10 +59,7 @@
 
     <div id="xp-toast" class="fixed top-10 right-10 z-[3000] glass p-4 rounded-2xl flex items-center gap-4 transform translate-x-full transition-transform duration-500 border-l-4 border-yellow-400">
         <span class="text-2xl">✨</span>
-        <div>
-            <p class="text-xs font-bold text-slate-400 uppercase">Progresso</p>
-            <p class="font-black text-white text-lg" id="xp-msg">+XP</p>
-        </div>
+        <div><p class="text-xs font-bold text-slate-400 uppercase">Progresso</p><p class="font-black text-white text-lg" id="xp-msg">+XP</p></div>
     </div>
 
     <nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 glass border-r border-white/5 p-6 z-50">
@@ -76,17 +72,19 @@
             <p class="text-[9px] text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition">Leonardo Pinto</p>
         </div>
 
-        <div class="space-y-2 flex-1">
-            <button onclick="nav('dash', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📊 Dashboard</button>
+        <div class="space-y-1 flex-1 overflow-y-auto custom-scroll">
+            <button onclick="nav('dash', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📊 Geral</button>
             <button onclick="nav('fin', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">💰 Financeiro</button>
+            <button onclick="nav('tree', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📦 Árvores/Locais</button>
             <button onclick="nav('tasks', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">✅ Tarefas</button>
+            <button onclick="nav('goals', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🏆 Metas 2026</button>
             <button onclick="nav('focus', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🍅 Foco</button>
             <button onclick="nav('vault', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🔐 Cofre</button>
         </div>
         
         <div class="pt-6 border-t border-white/5">
             <button onclick="generateReportIA()" class="w-full bg-emerald-600/10 text-emerald-400 p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 mb-2">🤖 Relatório IA</button>
-            <button onclick="exportData()" class="w-full text-slate-500 text-[9px] uppercase font-bold text-center">Backup Seguro</button>
+            <button onclick="exportData()" class="w-full text-slate-500 text-[9px] uppercase font-bold text-center">Backup JSON</button>
         </div>
     </nav>
 
@@ -99,9 +97,7 @@
                     <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded" id="date-now"></span>
                 </div>
             </div>
-            <div class="flex gap-3">
-                <button onclick="togglePrivacy()" class="w-10 h-10 glass rounded-xl flex items-center justify-center text-lg hover:bg-white/10 transition" id="priv-btn">👁️</button>
-            </div>
+            <button onclick="togglePrivacy()" class="w-10 h-10 glass rounded-xl flex items-center justify-center text-lg hover:bg-white/10 transition" id="priv-btn">👁️</button>
         </header>
 
         <section id="dash" class="tab-content active space-y-8">
@@ -109,28 +105,23 @@
                 <div id="survival-card" class="glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 border-t border-white/5">
                     <div class="absolute right-0 top-0 w-32 h-32 bg-blue-600/10 blur-[60px] rounded-full"></div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Caixa & Sobrevivência</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sobrevivência</p>
                         <h3 id="dash-saldo" class="text-4xl font-black blur-secret text-white">R$ 0,00</h3>
                         <div class="mt-4 flex items-center justify-between">
                             <span id="runway-badge" class="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black uppercase text-slate-400">Calculando...</span>
-                            <span class="text-2xl animate-pulse" id="survival-icon">🛡️</span>
                         </div>
                     </div>
                 </div>
-
-                <div class="glass p-8 rounded-[35px] border-l-4 border-emerald-500">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Performance Diária</p>
-                    <div class="flex items-end gap-2 mb-2">
-                        <h3 id="dash-perf" class="text-4xl font-black text-emerald-400">0%</h3>
-                        <span class="text-xs text-slate-500 font-bold mb-2">eficiência</span>
-                    </div>
-                    <div class="w-full bg-slate-700/50 h-1.5 rounded-full overflow-hidden">
-                        <div id="perf-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000" style="width: 0%"></div>
+                <div class="glass p-8 rounded-[35px] border-l-4 border-purple-500 relative">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Inventário Global</p>
+                    <h3 id="dash-tree-perc" class="text-4xl font-black text-purple-400">0%</h3>
+                    <p class="text-xs text-slate-500 mt-1">Média de todas as árvores</p>
+                    <div class="absolute bottom-0 left-0 w-full h-1.5 bg-slate-700/50">
+                        <div id="dash-tree-bar" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div>
                     </div>
                 </div>
-
                 <div class="glass p-8 rounded-[35px] flex flex-col justify-center border-l-4 border-orange-500">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Status Leonardo</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Bio-Status</p>
                     <div class="flex justify-between px-2">
                         <button onclick="setMood('🔥')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🔥</button>
                         <button onclick="setMood('🧠')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🧠</button>
@@ -173,7 +164,7 @@
                 <div class="flex gap-2 mt-4 ml-2">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="fin-recur" class="w-4 h-4 accent-blue-500 rounded">
-                        <span class="text-xs font-bold text-slate-400">Despesa Fixa / Recorrente?</span>
+                        <span class="text-xs font-bold text-slate-400">Recorrente (Fixo)</span>
                     </label>
                 </div>
             </div>
@@ -185,6 +176,16 @@
                 </div>
                 <div id="fin-list" class="divide-y divide-white/5 max-h-[500px] overflow-y-auto custom-scroll p-2"></div>
             </div>
+        </section>
+
+        <section id="tree" class="tab-content space-y-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-black text-white uppercase tracking-tighter">Locais & Árvores</h3>
+                <button onclick="createNewTree()" class="bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-purple-500/30 transition">+ Adicionar Local</button>
+            </div>
+
+            <div id="trees-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                </div>
         </section>
 
         <section id="tasks" class="tab-content space-y-8">
@@ -200,11 +201,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass p-2 rounded-[25px] flex gap-2 items-center pr-4 border-blue-500/20 task-input-area">
-                        <input type="text" id="task-in" placeholder="Adicionar Tarefa..." class="flex-1 bg-transparent border-none shadow-none p-4 text-sm font-bold focus:ring-0">
-                        <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl font-bold flex items-center justify-center transition shadow-lg shadow-blue-900/30">+</button>
+                        <input type="text" id="task-in" placeholder="Nova Tarefa..." class="flex-1 bg-transparent border-none shadow-none p-4 text-sm font-bold focus:ring-0">
+                        <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl font-bold flex items-center justify-center">+</button>
                     </div>
                     <div id="task-list" class="space-y-3"></div>
-                    
                     <div class="glass p-6 rounded-[35px] border-t-2 border-orange-500/20 mt-8">
                         <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Hábitos Diários</h4>
                         <div id="habit-list" class="space-y-2"></div>
@@ -214,9 +214,8 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="glass p-8 rounded-[40px] h-fit sticky top-6">
-                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Performance</h4>
+                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Foco do Dia</h4>
                     <div class="flex justify-center mb-8 relative">
                         <svg class="w-32 h-32 transform -rotate-90">
                             <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none" />
@@ -224,12 +223,18 @@
                         </svg>
                         <div class="absolute inset-0 flex items-center justify-center flex-col">
                             <span id="analytics-perc" class="text-2xl font-black text-white">0%</span>
-                            <span class="text-[8px] uppercase font-bold text-slate-500">Score</span>
                         </div>
                     </div>
                     <button onclick="finalizeDay()" class="w-full bg-slate-800 hover:bg-slate-700 p-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-white/10 transition">Finalizar Dia (+XP)</button>
                 </div>
             </div>
+        </section>
+
+        <section id="goals" class="tab-content space-y-6">
+            <h3 class="text-2xl font-black text-white mb-6 uppercase tracking-tighter pl-2">Mural de Conquistas 2026</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="goals-list">
+                </div>
+            <button onclick="addGoal()" class="w-full py-6 rounded-[30px] border-2 border-dashed border-white/10 text-slate-500 font-bold hover:border-white/30 hover:text-white transition uppercase text-xs tracking-widest">+ Adicionar Grande Meta</button>
         </section>
 
         <section id="focus" class="tab-content">
@@ -241,8 +246,8 @@
                     </div>
                 </div>
                 <div class="flex gap-6">
-                    <button onclick="startPomo()" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-3xl font-black shadow-lg shadow-blue-900/40 transition hover:-translate-y-1 tracking-widest">START</button>
-                    <button onclick="resetPomo()" class="bg-white/5 hover:bg-white/10 text-slate-300 px-12 py-5 rounded-3xl font-black border border-white/5 transition tracking-widest">RESET</button>
+                    <button onclick="startPomo()" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-3xl font-black shadow-lg shadow-blue-900/40 tracking-widest">START</button>
+                    <button onclick="resetPomo()" class="bg-white/5 hover:bg-white/10 text-slate-300 px-12 py-5 rounded-3xl font-black border border-white/5 tracking-widest">RESET</button>
                 </div>
             </div>
         </section>
@@ -272,13 +277,13 @@
     <nav class="lg:hidden fixed bottom-6 left-6 right-6 h-20 glass rounded-[30px] z-[90] flex items-center justify-around px-4 border border-white/10 shadow-2xl backdrop-blur-xl bg-[#0f172a]/80">
         <button onclick="nav('dash')" class="text-2xl opacity-60">📊</button>
         <button onclick="nav('fin')" class="text-2xl opacity-60">💰</button>
+        <button onclick="nav('tree')" class="text-2xl opacity-60">📦</button>
         <button onclick="nav('tasks')" class="text-2xl opacity-60">✅</button>
-        <button onclick="nav('focus')" class="text-2xl opacity-60">🍅</button>
-        <button onclick="nav('vault')" class="text-2xl opacity-60">🔐</button>
+        <button onclick="nav('goals')" class="text-2xl opacity-60">🏆</button>
     </nav>
 
     <script>
-        // CONFIG FIREBASE
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
             authDomain: "inventario-visao.firebaseapp.com",
@@ -293,37 +298,32 @@
 
         // ESTADO GLOBAL
         let state = {
-            view: 'dash',
-            privacy: false,
-            currentMonth: new Date().getMonth(),
-            currentYear: new Date().getFullYear(),
+            view: 'dash', privacy: false,
+            currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear(),
             selectedDate: new Date().toISOString().split('T')[0],
-            finData: [], tasksData: [], habitsData: [], notesData: [], filesData: [],
-            xp: 0, level: 1, pomoTime: 25 * 60, pomoInterval: null
+            finData: [], tasksData: [], habitsData: [], notesData: [], filesData: [], goalsData: [],
+            xp: 0, level: 1,
+            // ATUALIZAÇÃO: AGORA O SISTEMA ACEITA VÁRIAS ÁRVORES
+            trees: [], 
+            pomoTime: 25 * 60, pomoInterval: null
         };
-
         const mesesStr = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-        // GOD MODE KEYS
+        // KEYS
         document.addEventListener('keydown', (e) => {
             if((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleGodMode(); }
             if(e.key === 'Escape') document.getElementById('god-mode').classList.remove('open');
             if(document.getElementById('god-mode').classList.contains('open') && e.key === 'Enter') executeGodCommand();
         });
 
-        // LOGIN DO LEONARDO
+        // LOGIN
         function handleLogin() {
-            const user = document.getElementById('user').value;
-            const pass = document.getElementById('pass').value;
-            
-            if(user === "leonardo" && pass === "pinto2026") {
+            if(document.getElementById('user').value === "leonardo" && document.getElementById('pass').value === "pinto2026") {
                 document.getElementById('login-page').style.display = 'none';
-                document.getElementById('app-page').classList.remove('hidden');
                 document.querySelector('nav').classList.remove('hidden');
+                document.getElementById('app-page').classList.remove('hidden');
                 init();
-            } else {
-                alert("Acesso Negado: Credenciais Incorretas.");
-            }
+            } else alert("Acesso Negado.");
         }
 
         function init() {
@@ -332,25 +332,172 @@
             db.collection("habitos").onSnapshot(s => { state.habitsData = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
             db.collection("notas").orderBy("created", "desc").onSnapshot(s => { state.notesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
             db.collection("arquivos").orderBy("created", "desc").onSnapshot(s => { state.filesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
-            db.collection("system_stats").doc("main").onSnapshot(d => { if(d.exists) { state.xp = d.data().xp || 0; state.level = d.data().level || 1; updateXPUI(); } });
+            db.collection("metas").onSnapshot(s => { state.goalsData = s.docs.map(d => ({id:d.id,...d.data()})); renderGoals(); });
+            
+            // CARREGAMENTO DAS ÁRVORES (NOVO SISTEMA)
+            db.collection("system_stats").doc("main").onSnapshot(d => { 
+                if(d.exists) { 
+                    state.xp = d.data().xp || 0; 
+                    state.level = d.data().level || 1; 
+                    
+                    // Se existir a nova estrutura 'trees', usa ela. Se for a antiga 'tree', converte.
+                    if (d.data().trees) {
+                        state.trees = d.data().trees;
+                    } else if (d.data().tree) {
+                        // Converte sistema antigo para array
+                        state.trees = [{ id: 'master', name: 'Árvore Mestra', total: d.data().tree.total, pending: d.data().tree.pending }];
+                    } else {
+                        state.trees = [];
+                    }
+
+                    updateXPUI();
+                    renderTrees();
+                }
+            });
             updateDate();
         }
 
-        // --- XP & GAME ---
+        // --- XP ---
         function gainXP(amount) {
             state.xp += amount;
-            if(state.xp >= state.level * 500) { state.level++; state.xp = 0; showToast(`Nível ${state.level} Alcançado!`); } else { showToast(`+${amount} XP`); }
+            if(state.xp >= state.level * 500) { state.level++; state.xp = 0; showToast(`Nível ${state.level}!`); } else { showToast(`+${amount} XP`); }
             db.collection("system_stats").doc("main").set({xp: state.xp, level: state.level}, {merge: true});
             updateXPUI();
         }
         function updateXPUI() {
             document.getElementById('lvl-display').innerText = state.level;
-            document.getElementById('xp-display').innerText = `${state.xp} / ${state.level*500} XP`;
-            document.getElementById('xp-bar-visual').style.width = `${(state.xp / (state.level * 500)) * 100}%`;
+            document.getElementById('xp-display').innerText = `${state.xp} XP`;
+            document.getElementById('xp-bar-visual').style.width = `${(state.xp/(state.level*500))*100}%`;
         }
         function showToast(msg) {
             const t = document.getElementById('xp-toast'); document.getElementById('xp-msg').innerText = msg;
             t.classList.remove('translate-x-full'); setTimeout(() => t.classList.add('translate-x-full'), 3000);
+        }
+
+        // --- SISTEMA MULTI-ÁRVORES (NOVO) ---
+        function renderTrees() {
+            const container = document.getElementById('trees-container');
+            container.innerHTML = ""; // Limpa container
+
+            let totalGlobal = 0;
+            let pendingGlobal = 0;
+
+            state.trees.forEach((tree, index) => {
+                totalGlobal += tree.total;
+                pendingGlobal += tree.pending;
+                
+                const done = tree.total - tree.pending;
+                const perc = tree.total > 0 ? Math.round((done / tree.total) * 100) : 0;
+                // Calculo para o SVG (Circunferência é aprox 753)
+                const offset = 753 - (753 * perc) / 100;
+
+                const card = document.createElement('div');
+                card.className = "glass p-8 rounded-[40px] text-center border border-purple-500/20 relative group";
+                card.innerHTML = `
+                    <button onclick="deleteTree(${index})" class="absolute top-4 right-4 text-red-500 opacity-0 group-hover:opacity-100 transition text-[10px]">Excluir</button>
+                    <h3 class="text-xl font-black text-white mb-2 uppercase tracking-tighter">${tree.name}</h3>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Progresso Local</p>
+                    
+                    <div class="relative w-48 h-48 mx-auto mb-6">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="none" />
+                            <circle cx="96" cy="96" r="88" stroke="#a855f7" stroke-width="8" fill="none" stroke-dasharray="753" stroke-dashoffset="${offset}" class="tree-progress" stroke-linecap="round" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-3xl font-black text-white">${perc}%</span>
+                            <span class="text-[9px] uppercase font-bold text-slate-500 mt-1">Concluído</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mb-6">
+                        <div class="bg-white/5 p-2 rounded-xl">
+                            <p class="text-[9px] font-bold text-slate-500 uppercase">Total</p>
+                            <p class="text-lg font-black text-white">${tree.total}</p>
+                        </div>
+                        <div class="bg-white/5 p-2 rounded-xl border border-purple-500/30">
+                            <p class="text-[9px] font-bold text-purple-400 uppercase">Pendente</p>
+                            <p class="text-lg font-black text-purple-400">${tree.pending}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[10px] font-bold text-slate-300 mb-2">Abater Pendentes</p>
+                        <div class="flex gap-2">
+                            <input type="number" id="tree-in-${index}" placeholder="Qtd" class="flex-1 p-2 rounded-lg text-center font-bold text-sm">
+                            <button onclick="updateTreeProgress(${index})" class="bg-purple-600 hover:bg-purple-500 text-white px-4 rounded-lg font-black text-xs shadow-lg shadow-purple-900/30">OK</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Atualiza Dashboard Geral
+            const doneGlobal = totalGlobal - pendingGlobal;
+            const percGlobal = totalGlobal > 0 ? Math.round((doneGlobal / totalGlobal) * 100) : 0;
+            document.getElementById('dash-tree-perc').innerText = `${percGlobal}%`;
+            document.getElementById('dash-tree-bar').style.width = `${percGlobal}%`;
+        }
+
+        function createNewTree() {
+            const nome = prompt("Nome da Nova Árvore/Local (Ex: São Luís):");
+            if (!nome) return;
+            const total = prompt("Quantidade TOTAL de itens neste local:");
+            if (!total) return;
+
+            const novaArvore = {
+                id: Date.now().toString(),
+                name: nome,
+                total: parseInt(total),
+                pending: parseInt(total)
+            };
+
+            const novaLista = [...state.trees, novaArvore];
+            db.collection("system_stats").doc("main").update({ trees: novaLista });
+            showToast("Local Criado!");
+        }
+
+        function updateTreeProgress(index) {
+            const input = document.getElementById(`tree-in-${index}`);
+            const val = parseInt(input.value);
+            if(!val || val <= 0) return;
+
+            const arvore = state.trees[index];
+            let newPending = arvore.pending - val;
+            if(newPending < 0) newPending = 0;
+
+            // Atualiza o objeto no array local
+            state.trees[index].pending = newPending;
+
+            // Salva no Firebase
+            db.collection("system_stats").doc("main").update({ trees: state.trees });
+            
+            gainXP(val * 2); 
+            input.value = '';
+            showToast(`${val} Produtos!`);
+        }
+
+        function deleteTree(index) {
+            if(confirm("Tem certeza que deseja apagar essa árvore/local?")) {
+                const novaLista = state.trees.filter((_, i) => i !== index);
+                db.collection("system_stats").doc("main").update({ trees: novaLista });
+            }
+        }
+
+        // --- METAS (STRATEGY) ---
+        async function addGoal() {
+            const t = prompt("Nome da Meta (Ex: Comprar Carro):");
+            if(t) await db.collection("metas").add({title: t, done: false});
+        }
+        
+        function renderGoals() {
+            document.getElementById('goals-list').innerHTML = state.goalsData.map(g => `
+                <div class="glass p-6 rounded-[30px] border border-white/5 relative group">
+                    <h4 class="font-bold text-lg text-white mb-2">${g.title}</h4>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">${g.done ? 'CONQUISTADO' : 'EM ANDAMENTO'}</p>
+                    <button onclick="db.collection('metas').doc('${g.id}').update({done: !${g.done}})" class="w-full py-2 rounded-xl text-xs font-black uppercase ${g.done ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}">${g.done ? 'Concluída' : 'Marcar Conclusão'}</button>
+                    <button onclick="db.collection('metas').doc('${g.id}').delete()" class="absolute top-4 right-4 text-red-500 opacity-0 group-hover:opacity-100 transition">✕</button>
+                </div>
+            `).join('');
         }
 
         // --- SURVIVAL ---
@@ -361,16 +508,14 @@
                 const val = f.recorrente ? f.valorTotal : (f.valorTotal / f.parcelas);
                 if(f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas) { f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val; }
             });
-            
-            const card = document.getElementById('survival-card');
             const badge = document.getElementById('runway-badge');
+            const card = document.getElementById('survival-card');
             
-            // Simulação de "Runway" baseada no saldo
-            if(saldoMes < 0) { card.className = "glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 survival-danger"; badge.innerText = "CRISE IMEDIATA"; badge.className = "px-3 py-1 bg-red-500 rounded-lg text-[9px] font-black uppercase text-white"; }
-            else if (saldoMes > 5000) { card.className = "glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 survival-safe"; badge.innerText = "SOBERANIA"; badge.className = "px-3 py-1 bg-emerald-500 rounded-lg text-[9px] font-black uppercase text-white"; }
-            else { card.className = "glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500"; badge.innerText = "ESTÁVEL"; badge.className = "px-3 py-1 bg-white/10 rounded-lg text-[9px] font-black uppercase text-slate-400"; }
-            
+            if(saldoMes < 0) { badge.innerText = "ALERTA: DÉFICIT"; badge.className = "px-3 py-1 bg-red-500 rounded-lg text-[9px] font-black uppercase text-white"; card.classList.add('survival-danger'); }
+            else if(saldoMes > 5000) { badge.innerText = "SOBERANIA"; badge.className = "px-3 py-1 bg-emerald-500 rounded-lg text-[9px] font-black uppercase text-white"; card.classList.add('survival-safe'); }
+            else { badge.innerText = "ESTÁVEL"; badge.className = "px-3 py-1 bg-white/10 rounded-lg text-[9px] font-black uppercase text-slate-400"; card.classList.remove('survival-danger', 'survival-safe'); }
             document.getElementById('dash-saldo').innerText = `R$ ${saldoMes.toFixed(2)}`;
+            document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2)}`;
         }
 
         // --- GOD MODE ---
@@ -382,21 +527,17 @@
             toggleGodMode();
         }
 
-        // --- FINANCEIRO FLEX ---
+        // --- FINANCEIRO ---
         async function saveFin(tipo) {
             const desc = document.getElementById('fin-desc').value;
             const valorTotal = parseFloat(document.getElementById('fin-val').value);
             const parcInput = parseInt(document.getElementById('fin-parc').value);
             const recur = document.getElementById('fin-recur').checked;
-            
             if(!desc || !valorTotal) return alert("Preencha!");
-            
             let parcelas = recur ? 12 : (parcInput > 0 ? parcInput : 1);
-            
             await db.collection("financeiro").add({desc, valorTotal, parcelas, recorrente: recur, tipo, mesIn: state.currentMonth, anoIn: state.currentYear, created: new Date()});
             gainXP(15); document.getElementById('fin-desc').value = ''; document.getElementById('fin-val').value = '';
         }
-
         function renderFin() {
             document.getElementById('month-label').innerText = mesesStr[state.currentMonth];
             document.getElementById('year-label').innerText = state.currentYear;
@@ -411,7 +552,6 @@
                 f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val;
                 return `<div class="p-4 flex justify-between items-center hover:bg-white/5 transition rounded-xl"><div><p class="font-bold text-sm text-white">${f.desc}</p><p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-0.5">${f.recorrente?'🔄 RECORRENTE':`PARCELA ${diff+1}/${f.parcelas}`}</p></div><div class="text-right"><p class="font-bold ${f.tipo==='entrada'?'text-emerald-400':'text-red-400'} blur-secret text-sm">R$ ${val.toFixed(2)}</p><button onclick="deleteFin('${f.id}')" class="text-[8px] text-slate-600 hover:text-red-500 uppercase font-black">x</button></div></div>`;
             }).join('');
-            document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2)}`;
         }
         function changeMonth(dir) { state.currentMonth += dir; if(state.currentMonth>11){state.currentMonth=0;state.currentYear++} if(state.currentMonth<0){state.currentMonth=11;state.currentYear--} renderFin(); updateSurvivalUI(); }
         async function deleteFin(id) { if(confirm("Apagar?")) await db.collection("financeiro").doc(id).delete(); }
@@ -421,22 +561,18 @@
         async function addTask() { const t=document.getElementById('task-in').value; if(t){ await db.collection("tarefas").add({text:t, done:false, date:state.selectedDate}); document.getElementById('task-in').value=''; } }
         async function addHabit() { const h=document.getElementById('habit-in').value; if(h){ await db.collection("habitos").add({text:h, done:false, date:state.selectedDate}); document.getElementById('habit-in').value=''; } }
         async function toggleCheck(col, id, status) { await db.collection(col).doc(id).update({done: status}); if(status) gainXP(col === 'tarefas' ? 10 : 20); }
-        
         function renderTasks() {
             const isToday = state.selectedDate === new Date().toISOString().split('T')[0];
             document.getElementById('task-date-display').innerText = isToday ? "HOJE" : state.selectedDate.split('-').reverse().join('/');
             document.getElementById('lock-status').innerText = isToday ? "EDITÁVEL" : "LEITURA";
             const tasks = state.tasksData.filter(t => t.date === state.selectedDate);
             const habits = state.habitsData.filter(h => h.date === state.selectedDate);
-            
-            document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 group ${isToday?'':'opacity-50 pointer-events-none'}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleCheck('tarefas','${t.id}',this.checked)" class="w-5 h-5 accent-blue-600 rounded cursor-pointer"><span class="flex-1 text-sm ${t.done?'line-through opacity-40':''}">${t.text}</span>${isToday?`<button onclick="db.collection('tarefas').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 text-xs">x</button>`:''}</div>`).join('');
+            document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 group ${isToday?'':'opacity-50 pointer-events-none'}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleCheck('tarefas','${t.id}',this.checked)" class="w-5 h-5 accent-blue-600 rounded cursor-pointer"><span class="flex-1 text-sm ${t.done?'line-through opacity-40':''}">${t.text}</span>${isToday?`<button onclick="db.collection('tarefas').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 text-xs">✕</button>`:''}</div>`).join('');
             document.getElementById('habit-list').innerHTML = habits.map(h => `<div class="flex justify-between items-center p-2 hover:bg-white/5 rounded-lg group ${isToday?'':'opacity-50 pointer-events-none'}"><span class="text-xs font-bold text-slate-300 ${h.done?'text-emerald-400':''}">${h.text}</span><div class="flex gap-2"><button onclick="toggleCheck('habitos','${h.id}',!${h.done})" class="text-[10px] bg-slate-800 px-2 rounded hover:bg-slate-700">${h.done?'DESFAZER':'FEITO'}</button></div></div>`).join('');
-            
             const total = tasks.length + habits.length; const done = tasks.filter(t=>t.done).length + habits.filter(h=>h.done).length;
             const perc = total > 0 ? Math.round((done/total)*100) : 0;
             document.getElementById('progress-circle').style.strokeDashoffset = 351 - (351*perc)/100;
             document.getElementById('analytics-perc').innerText = `${perc}%`;
-            if(isToday) { document.getElementById('dash-perf').innerText = `${perc}%`; document.getElementById('perf-bar').style.width = `${perc}%`; }
         }
         function finalizeDay() { if(confirm("Finalizar dia?")) { gainXP(100); alert("Dia Finalizado! +100 XP"); } }
 
@@ -444,14 +580,14 @@
         function startPomo(){ if(state.pomoInterval)return; state.pomoInterval=setInterval(()=>{ state.pomoTime--; const m=Math.floor(state.pomoTime/60).toString().padStart(2,'0'); const s=(state.pomoTime%60).toString().padStart(2,'0'); document.getElementById('timer-display').innerText=`${m}:${s}`; if(state.pomoTime<=0){resetPomo(); gainXP(50); alert("Foco!");} },1000); }
         function resetPomo(){ clearInterval(state.pomoInterval); state.pomoInterval=null; state.pomoTime=25*60; document.getElementById('timer-display').innerText="25:00"; }
         async function saveNote(){ const t=document.getElementById('note-in').value; if(t){ await db.collection("notas").add({text:t, created:new Date()}); document.getElementById('note-in').value=''; gainXP(5); } }
-        async function uploadFile(e){ const f=e.target.files[0]; const ref=storage.ref(`v9/${Date.now()}_${f.name}`); await ref.put(f); const u=await ref.getDownloadURL(); await db.collection("arquivos").add({name:f.name, url:u, created:new Date()}); gainXP(10); }
+        async function uploadFile(e){ const f=e.target.files[0]; const ref=storage.ref(`v10/${Date.now()}_${f.name}`); await ref.put(f); const u=await ref.getDownloadURL(); await db.collection("arquivos").add({name:f.name, url:u, created:new Date()}); gainXP(10); }
         function renderVault(){ document.getElementById('note-list').innerHTML=state.notesData.map(n=>`<div class="p-3 bg-slate-900/50 border border-white/5 rounded-xl text-xs text-slate-300 relative group">${n.text}<button onclick="db.collection('notas').doc('${n.id}').delete()" class="absolute top-1 right-2 text-red-500 opacity-0 group-hover:opacity-100">x</button></div>`).join(''); document.getElementById('file-list').innerHTML=state.filesData.map(f=>`<a href="${f.url}" target="_blank" class="block p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400 truncate hover:bg-blue-500/20 transition">${f.name}</a>`).join(''); }
-        function nav(id, btn){ document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(id).classList.add('active'); if(btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');} document.getElementById('view-title').innerText=id==='dash'?'Visão Geral':id.toUpperCase(); }
+        function nav(id, btn){ document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(id).classList.add('active'); if(btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');} document.getElementById('view-title').innerText=id==='dash'?'Central de Comando':id.toUpperCase(); }
         function togglePrivacy(){ state.privacy=!state.privacy; document.querySelectorAll('.blur-secret').forEach(el=>state.privacy?el.classList.add('blur-secret'):el.classList.remove('blur-secret')); }
         function updateDate(){ const n=new Date(); document.getElementById('date-now').innerText=n.toLocaleDateString('pt-br',{weekday:'short',day:'2-digit',month:'short'}); }
         async function setMood(emoji){ await db.collection("humor").add({emoji, date: new Date()}); gainXP(5); }
-        function generateReportIA() { const prompt = `RELATÓRIO LEONARDO 9.0: Saldo: ${document.getElementById('dash-saldo').innerText}. Score: ${document.getElementById('analytics-perc').innerText}. Nível: ${state.level}. Analise e me dê 3 ordens.`; navigator.clipboard.writeText(prompt); alert("Prompt Copiado!"); }
-        function exportData(){ const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state)); const n=document.createElement('a'); n.href=s; n.download=`backup_leo_${Date.now()}.json`; document.body.appendChild(n); n.click(); n.remove(); }
+        function generateReportIA() { const prompt = `RELATÓRIO LEONARDO 10.0: Saldo: ${document.getElementById('dash-saldo').innerText}. Score: ${document.getElementById('analytics-perc').innerText}. Nível: ${state.level}. Analise e me dê 3 ordens.`; navigator.clipboard.writeText(prompt); alert("Prompt Copiado!"); }
+        function exportData(){ const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state)); const n=document.createElement('a'); n.href=s; n.download=`backup_leo_final_${Date.now()}.json`; document.body.appendChild(n); n.click(); n.remove(); }
     </script>
 </body>
 </html>
