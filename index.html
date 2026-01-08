@@ -21,7 +21,7 @@
         .blur-secret:hover { filter: blur(0); }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        input, select { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
+        input, select, textarea { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .nav-btn.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #60a5fa; }
         
         .tree-progress { transition: stroke-dashoffset 1.5s ease-in-out; }
@@ -30,14 +30,23 @@
         .god-overlay.open { display: flex; animation: fadeIn 0.1s ease-out; }
         .survival-danger { border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
         .survival-safe { border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+
+        /* Classe para a Logo */
+        .brand-logo { max-width: 100%; height: auto; object-fit: contain; }
+        .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.03; width: 60%; pointer-events: none; z-index: 0; }
     </style>
 </head>
-<body class="min-h-screen pb-24 lg:pb-0">
+<body class="min-h-screen pb-24 lg:pb-0 relative">
+
+    <img src="logo.png" class="watermark" alt="Logo Fundo">
 
     <div id="login-page" class="fixed inset-0 z-[1000] flex items-center justify-center bg-[#020617] p-6">
         <div class="glass p-10 rounded-[40px] w-full max-w-sm text-center border-t border-blue-500/20 shadow-2xl relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
-            <h1 class="text-3xl font-black tracking-tighter mb-1 text-white uppercase">Inventário Visão</h1>
+            
+            <img src="logo.png" alt="Logo Visão" class="w-32 mx-auto mb-6 drop-shadow-2xl">
+            
+            <h1 class="text-2xl font-black tracking-tighter mb-1 text-white uppercase">Inventário Visão</h1>
             <p class="text-slate-400 text-[10px] font-bold tracking-[0.4em] mb-8 uppercase">Acesso Leonardo</p>
             <div class="space-y-4">
                 <input type="text" id="user" placeholder="USUÁRIO" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
@@ -62,6 +71,10 @@
     </div>
 
     <nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 glass border-r border-white/5 p-6 z-50">
+        <div class="mb-8 flex justify-center">
+            <img src="logo.png" alt="Logo" class="w-24 opacity-80 hover:opacity-100 transition duration-500">
+        </div>
+
         <div class="mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden group">
             <div class="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000" id="xp-bar-visual" style="width: 0%"></div>
             <div class="flex justify-between items-end mb-1">
@@ -72,7 +85,7 @@
         </div>
 
         <div class="space-y-1 flex-1 overflow-y-auto custom-scroll">
-            <button onclick="nav('dash', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📊 Geral</button>
+            <button onclick="nav('dash', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📊 Central de Comando</button>
             <button onclick="nav('fin', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">💰 Financeiro</button>
             <button onclick="nav('tree', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📦 Árvores/Locais</button>
             <button onclick="nav('tasks', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">✅ Tarefas</button>
@@ -87,11 +100,11 @@
         </div>
     </nav>
 
-    <main id="app-page" class="hidden lg:ml-72 p-6 lg:p-10 max-w-7xl mx-auto pb-32 lg:pb-12">
+    <main id="app-page" class="hidden lg:ml-72 p-6 lg:p-10 max-w-7xl mx-auto pb-32 lg:pb-12 z-10 relative">
         
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
-                <h2 id="view-title" class="text-3xl font-extrabold tracking-tight text-white uppercase">Visão Geral</h2>
+                <h2 id="view-title" class="text-3xl font-extrabold tracking-tight text-white uppercase">Central de Comando</h2>
                 <div class="flex gap-4 mt-1 items-center">
                     <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded" id="date-now"></span>
                 </div>
@@ -100,7 +113,8 @@
         </header>
 
         <section id="dash" class="tab-content active space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                
                 <div id="survival-card" class="glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 border-t border-white/5">
                     <div class="absolute right-0 top-0 w-32 h-32 bg-blue-600/10 blur-[60px] rounded-full"></div>
                     <div class="relative z-10">
@@ -111,6 +125,21 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="glass p-8 rounded-[35px] border-l-4 border-emerald-500 relative flex flex-col justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Produtividade Hoje</p>
+                        <div class="flex items-end gap-2">
+                            <h3 id="dash-task-perc" class="text-4xl font-black text-emerald-400">0%</h3>
+                            <span class="text-xs font-bold text-slate-500 mb-2">Concluído</span>
+                        </div>
+                    </div>
+                    <div class="w-full h-3 bg-slate-800 rounded-full mt-4 overflow-hidden">
+                        <div id="dash-task-bar" class="h-full bg-emerald-500 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <p id="dash-task-count" class="text-[10px] text-slate-500 mt-2 font-bold uppercase">0 Tarefas Restantes</p>
+                </div>
+
                 <div class="glass p-8 rounded-[35px] border-l-4 border-purple-500 relative">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Inventário Global</p>
                     <h3 id="dash-tree-perc" class="text-4xl font-black text-purple-400">0%</h3>
@@ -119,14 +148,18 @@
                         <div id="dash-tree-bar" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div>
                     </div>
                 </div>
-                <div class="glass p-8 rounded-[35px] flex flex-col justify-center border-l-4 border-orange-500">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Bio-Status</p>
-                    <div class="flex justify-between px-2">
-                        <button onclick="setMood('🔥')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🔥</button>
-                        <button onclick="setMood('🧠')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🧠</button>
-                        <button onclick="setMood('💤')" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">💤</button>
+
+                <div class="glass p-6 rounded-[35px] flex items-center justify-between border-l-4 border-orange-500 relative overflow-hidden">
+                    <img src="logo.png" class="absolute right-[-20px] bottom-[-20px] w-32 opacity-10 rotate-12 pointer-events-none" alt="">
+                    <div class="z-10">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Bio-Status</p>
+                        <div class="flex gap-4">
+                            <button onclick="setMood('🔥')" class="text-3xl hover:scale-125 transition grayscale hover:grayscale-0">🔥</button>
+                            <button onclick="setMood('🧠')" class="text-3xl hover:scale-125 transition grayscale hover:grayscale-0">🧠</button>
+                            <button onclick="setMood('💤')" class="text-3xl hover:scale-125 transition grayscale hover:grayscale-0">💤</button>
+                        </div>
+                        <p id="last-mood" class="text-[10px] font-bold text-slate-500 mt-2 uppercase">-</p>
                     </div>
-                    <p id="last-mood" class="text-center text-[10px] font-bold text-slate-500 mt-4 uppercase">-</p>
                 </div>
             </div>
         </section>
@@ -203,13 +236,15 @@
                     </div>
                     <div id="task-list" class="space-y-3"></div>
                     
-                    <div class="glass p-6 rounded-[35px] border-t-2 border-orange-500/20 mt-8">
-                        <div class="flex justify-between items-center mb-4">
+                    <div class="glass p-6 rounded-[35px] border-t-2 border-orange-500/20 mt-8 relative overflow-hidden">
+                        <img src="logo.png" class="absolute right-[-10px] top-[-10px] w-20 opacity-5 rotate-45 pointer-events-none" alt="">
+                        
+                        <div class="flex justify-between items-center mb-4 relative z-10">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Rotina & Hábitos (Diário)</h4>
                             <span class="text-[9px] text-slate-600">Aplica-se a todos os dias</span>
                         </div>
-                        <div id="habit-list" class="space-y-2"></div>
-                        <div class="flex gap-2 mt-4 task-input-area">
+                        <div id="habit-list" class="space-y-2 relative z-10"></div>
+                        <div class="flex gap-2 mt-4 task-input-area relative z-10">
                             <input type="text" id="habit-in" placeholder="Novo Hábito Recorrente..." class="flex-1 bg-slate-900 p-2 rounded-lg text-xs font-bold">
                             <button onclick="addGlobalHabit()" class="bg-slate-700 px-3 rounded-lg font-bold text-xs">+ Rotina</button>
                         </div>
@@ -220,7 +255,7 @@
                     <div class="flex justify-center mb-8 relative">
                         <svg class="w-32 h-32 transform -rotate-90">
                             <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none" />
-                            <circle id="progress-circle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="351" stroke-dashoffset="351" class="transition-all duration-1000 ease-out" />
+                            <circle id="progress-circle" cx="64" cy="64" r="56" stroke="#10b981" stroke-width="8" fill="none" stroke-dasharray="351" stroke-dashoffset="351" class="transition-all duration-1000 ease-out" />
                         </svg>
                         <div class="absolute inset-0 flex items-center justify-center flex-col">
                             <span id="analytics-perc" class="text-2xl font-black text-white">0%</span>
@@ -302,9 +337,7 @@
             currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear(),
             selectedDate: new Date().toISOString().split('T')[0],
             finData: [], tasksData: [], 
-            // 'habitsData' agora guarda apenas os LOGS de quem foi feito
             habitsLog: [], 
-            // 'globalHabits' é a lista de nomes dos hábitos que aparecem todo dia
             globalHabits: [],
             notesData: [], filesData: [], goalsData: [],
             xp: 0, level: 1,
@@ -349,18 +382,17 @@
                     else if (d.data().tree) state.trees = [{ id: 'master', name: 'Árvore Mestra', total: d.data().tree.total, pending: d.data().tree.pending }];
                     else state.trees = [];
 
-                    // Carrega a lista GLOBAL de hábitos
                     state.globalHabits = d.data().globalHabits || [];
 
                     updateXPUI();
                     renderTrees();
-                    renderTasks(); // Re-renderiza tarefas para mostrar novos hábitos globais
+                    renderTasks(); 
                 }
             });
             updateDate();
         }
 
-        // --- XP ---
+        // XP
         function gainXP(amount) {
             state.xp += amount;
             if(state.xp >= state.level * 500) { state.level++; state.xp = 0; showToast(`Nível ${state.level}!`); } else { showToast(`+${amount} XP`); }
@@ -377,7 +409,7 @@
             t.classList.remove('translate-x-full'); setTimeout(() => t.classList.add('translate-x-full'), 3000);
         }
 
-        // --- SISTEMA MULTI-ÁRVORES ---
+        // TREES
         function renderTrees() {
             const container = document.getElementById('trees-container');
             container.innerHTML = ""; 
@@ -456,7 +488,7 @@
             }
         }
 
-        // --- METAS (STRATEGY) ---
+        // METAS
         async function addGoal() {
             const t = prompt("Nome da Meta (Ex: Comprar Carro):");
             if(t) await db.collection("metas").add({title: t, done: false});
@@ -472,7 +504,7 @@
             `).join('');
         }
 
-        // --- SURVIVAL ---
+        // SURVIVAL
         function updateSurvivalUI() {
             let saldoMes = 0;
             state.finData.forEach(f => {
@@ -489,7 +521,7 @@
             document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2)}`;
         }
 
-        // --- GOD MODE ---
+        // GOD MODE
         function toggleGodMode() { document.getElementById('god-mode').classList.toggle('open'); const i = document.getElementById('god-input'); if(document.getElementById('god-mode').classList.contains('open')) i.focus(); else i.value=''; }
         function executeGodCommand() {
             const v = document.getElementById('god-input').value; const cmd = v.split(' ')[0]; const c = v.substring(cmd.length + 1);
@@ -498,7 +530,7 @@
             toggleGodMode();
         }
 
-        // --- FINANCEIRO ---
+        // FINANCEIRO
         async function saveFin(tipo) {
             const desc = document.getElementById('fin-desc').value;
             const valorTotal = parseFloat(document.getElementById('fin-val').value);
@@ -527,11 +559,11 @@
         function changeMonth(dir) { state.currentMonth += dir; if(state.currentMonth>11){state.currentMonth=0;state.currentYear++} if(state.currentMonth<0){state.currentMonth=11;state.currentYear--} renderFin(); updateSurvivalUI(); }
         async function deleteFin(id) { if(confirm("Apagar?")) await db.collection("financeiro").doc(id).delete(); }
 
-        // --- TASKS & HÁBITOS (ATUALIZADO) ---
+        // --- TASKS & HÁBITOS ---
         function changeDay(dir) { const d = new Date(state.selectedDate); d.setDate(d.getDate() + dir); state.selectedDate = d.toISOString().split('T')[0]; renderTasks(); }
         async function addTask() { const t=document.getElementById('task-in').value; if(t){ await db.collection("tarefas").add({text:t, done:false, date:state.selectedDate}); document.getElementById('task-in').value=''; } }
         
-        // Adicionar novo hábito à lista GLOBAL
+        // Hábito Global
         async function addGlobalHabit() { 
             const h = document.getElementById('habit-in').value; 
             if(h){ 
@@ -550,13 +582,13 @@
 
         async function toggleCheck(col, id, status) { await db.collection(col).doc(id).update({done: status}); if(status) gainXP(10); }
 
-        // Nova função para marcar hábito em um dia específico
+        // CORREÇÃO: Função de Log de Hábito
         async function toggleHabitLog(habitName, logId, status) {
-            if (logId) {
-                // Se já existe um log para hoje, atualiza
+            // Se logId existir, apenas atualiza
+            if (logId && logId !== 'null') {
                 await db.collection("habitos_logs").doc(logId).update({done: status});
             } else {
-                // Se não existe, cria
+                // Se não existir, cria um novo log para HOJE
                 await db.collection("habitos_logs").add({text: habitName, done: status, date: state.selectedDate});
             }
             if(status) gainXP(20);
@@ -567,17 +599,18 @@
             document.getElementById('task-date-display').innerText = isToday ? "HOJE" : state.selectedDate.split('-').reverse().join('/');
             document.getElementById('lock-status').innerText = isToday ? "EDITÁVEL" : "LEITURA";
             
-            // Tarefas normais (vinculadas à data)
+            // Tarefas Únicas
             const tasks = state.tasksData.filter(t => t.date === state.selectedDate);
             document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 group ${isToday?'':'opacity-50 pointer-events-none'}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleCheck('tarefas','${t.id}',this.checked)" class="w-5 h-5 accent-blue-600 rounded cursor-pointer"><span class="flex-1 text-sm ${t.done?'line-through opacity-40':''}">${t.text}</span>${isToday?`<button onclick="db.collection('tarefas').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 text-xs">✕</button>`:''}</div>`).join('');
 
-            // Hábitos Globais (Aparecem todo dia, mas o check é por dia)
+            // Hábitos Recorrentes (Globais)
             const habitsLogsToday = state.habitsLog.filter(h => h.date === state.selectedDate);
             
             document.getElementById('habit-list').innerHTML = state.globalHabits.map(habitName => {
-                // Verifica se já foi feito hoje
+                // Tenta achar se já fizemos esse hábito hoje
                 const log = habitsLogsToday.find(h => h.text === habitName);
                 const isDone = log ? log.done : false;
+                // Importante: Passar 'null' string se não tiver ID
                 const logId = log ? log.id : null;
 
                 return `
@@ -592,15 +625,24 @@
                 </div>`;
             }).join('');
 
+            // Calculos
             const total = tasks.length + state.globalHabits.length; 
             const doneCount = tasks.filter(t=>t.done).length + habitsLogsToday.filter(h=>h.done && state.globalHabits.includes(h.text)).length;
             const perc = total > 0 ? Math.round((doneCount/total)*100) : 0;
+            const pending = total - doneCount;
+
+            // Atualiza Tab Tarefas
             document.getElementById('progress-circle').style.strokeDashoffset = 351 - (351*perc)/100;
             document.getElementById('analytics-perc').innerText = `${perc}%`;
+
+            // Atualiza Dashboard Principal
+            document.getElementById('dash-task-perc').innerText = `${perc}%`;
+            document.getElementById('dash-task-bar').style.width = `${perc}%`;
+            document.getElementById('dash-task-count').innerText = `${pending} Tarefas Restantes`;
         }
         function finalizeDay() { if(confirm("Finalizar dia?")) { gainXP(100); alert("Dia Finalizado! +100 XP"); } }
 
-        // --- UTIL ---
+        // UTIL
         function startPomo(){ if(state.pomoInterval)return; state.pomoInterval=setInterval(()=>{ state.pomoTime--; const m=Math.floor(state.pomoTime/60).toString().padStart(2,'0'); const s=(state.pomoTime%60).toString().padStart(2,'0'); document.getElementById('timer-display').innerText=`${m}:${s}`; if(state.pomoTime<=0){resetPomo(); gainXP(50); alert("Foco!");} },1000); }
         function resetPomo(){ clearInterval(state.pomoInterval); state.pomoInterval=null; state.pomoTime=25*60; document.getElementById('timer-display').innerText="25:00"; }
         async function saveNote(){ const t=document.getElementById('note-in').value; if(t){ await db.collection("notas").add({text:t, created:new Date()}); document.getElementById('note-in').value=''; gainXP(5); } }
