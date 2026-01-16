@@ -1,708 +1,118 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth dark">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VISÃO OS 10.0 | LEONARDO</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* CONFIGURAÇÃO DE CORES DA MARCA - Pode alterar o "blue" para a cor da sua empresa */
-        :root {
-            --brand-color: #3b82f6; /* Azul padrão - Mude se quiser */
-        }
+  <meta charset="UTF-8">
+  <title>Leitor de Excel – Progresso Automático</title>
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f8fafc; overflow-x: hidden; }
-        
-        /* Efeito de Vidro (Glassmorphism) */
-        .glass { 
-            background: rgba(15, 23, 42, 0.85); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255,255,255,0.08); 
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); 
-        }
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .blur-secret { filter: blur(8px); transition: 0.3s; cursor: pointer; }
-        .blur-secret:hover { filter: blur(0); }
-        
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        input, select, textarea { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
-        
-        .nav-btn.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-right: 3px solid #60a5fa; }
-        
-        .tree-progress { transition: stroke-dashoffset 1.5s ease-in-out; }
-        
-        .god-overlay { display: none; }
-        .god-overlay.open { display: flex; animation: fadeIn 0.1s ease-out; }
-        
-        .survival-danger { border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
-        .survival-safe { border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+  <!-- Firebase (AJUSTE COM SUAS CHAVES) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-        /* LOGO E MARCA D'ÁGUA */
-        .watermark { 
-            position: fixed; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            opacity: 0.03; /* Bem sutil */
-            width: 50%; 
-            pointer-events: none; 
-            z-index: 0; 
-            filter: grayscale(100%);
-        }
-        
-        .logo-login {
-            width: 120px;
-            margin: 0 auto 20px auto;
-            display: block;
-            filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
-        }
-
-        .logo-sidebar {
-            width: 80px;
-            margin: 0 auto;
-            opacity: 0.9;
-            transition: 0.3s;
-        }
-        .logo-sidebar:hover { opacity: 1; transform: scale(1.05); }
-
-    </style>
+  <style>
+    body {
+      background: #0b0f1a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #8b5cf6;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    input {
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
-<body class="min-h-screen pb-24 lg:pb-0 relative">
+<body>
 
-    <img src="logo.png" class="watermark" alt="Logo Fundo">
+  <h2>Importar Excel e Atualizar Progresso</h2>
 
-    <div id="login-page" class="fixed inset-0 z-[1000] flex items-center justify-center bg-[#020617] p-6">
-        <div class="glass p-10 rounded-[40px] w-full max-w-sm text-center border-t border-blue-500/20 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
-            
-            <img src="logo.png" alt="Logo Empresa" class="logo-login">
-            
-            <h1 class="text-2xl font-black tracking-tighter mb-1 text-white uppercase">Inventário Visão</h1>
-            <p class="text-slate-400 text-[10px] font-bold tracking-[0.4em] mb-8 uppercase">Acesso Restrito</p>
-            <div class="space-y-4">
-                <input type="text" id="user" placeholder="USUÁRIO" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
-                <input type="password" id="pass" placeholder="SENHA" class="w-full p-4 rounded-2xl text-center outline-none focus:border-blue-500 transition-all font-bold">
-            </div>
-            <button onclick="handleLogin()" class="w-full bg-blue-600 mt-6 p-4 rounded-2xl font-black shadow-lg shadow-blue-900/40 hover:bg-blue-500 transition transform active:scale-95 text-xs tracking-widest uppercase">Decodificar Acesso</button>
-        </div>
-    </div>
+  <input type="file" id="excelInput" accept=".xlsx,.xls">
+  <br>
+  <button onclick="processExcel()">Processar Excel</button>
 
-    <div id="god-mode" class="god-overlay fixed inset-0 z-[2000] bg-black/90 backdrop-blur-sm items-center justify-center">
-        <div class="w-full max-w-2xl bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl p-6">
-            <input type="text" id="god-input" placeholder="Digite o comando... (Ex: /t Pagar Luz)" class="w-full bg-transparent text-2xl font-bold text-white outline-none border-none font-mono" autocomplete="off">
-            <div class="mt-4 flex gap-4 text-[10px] text-slate-500 font-mono uppercase">
-                <span>/t [tarefa]</span><span>/n [nota]</span>
-            </div>
-        </div>
-    </div>
+  <script>
+    // 🔥 CONFIG FIREBASE (SUBSTITUA)
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_DOMINIO",
+      projectId: "SEU_PROJECT_ID"
+    };
 
-    <div id="xp-toast" class="fixed top-10 right-10 z-[3000] glass p-4 rounded-2xl flex items-center gap-4 transform translate-x-full transition-transform duration-500 border-l-4 border-yellow-400">
-        <span class="text-2xl">✨</span>
-        <div><p class="text-xs font-bold text-slate-400 uppercase">Progresso</p><p class="font-black text-white text-lg" id="xp-msg">+XP</p></div>
-    </div>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    <nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 glass border-r border-white/5 p-6 z-50">
-        <div class="mb-6 text-center">
-            <img src="logo.png" alt="Visão" class="logo-sidebar">
-        </div>
+    function processExcel() {
+      const file = document.getElementById("excelInput").files[0];
+      if (!file) {
+        alert("Selecione um arquivo Excel");
+        return;
+      }
 
-        <div class="mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden group">
-            <div class="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000" id="xp-bar-visual" style="width: 0%"></div>
-            <div class="flex justify-between items-end mb-1">
-                <span class="text-xs font-bold text-slate-400">Nível <span id="lvl-display" class="text-white">1</span></span>
-                <span class="text-[10px] font-black text-blue-400" id="xp-display">0 XP</span>
-            </div>
-            <p class="text-[9px] text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition">Leonardo Pinto</p>
-        </div>
+      const reader = new FileReader();
 
-        <div class="space-y-1 flex-1 overflow-y-auto custom-scroll">
-            <button onclick="nav('dash', this)" class="nav-btn active w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📊 Central de Comando</button>
-            <button onclick="nav('fin', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">💰 Financeiro</button>
-            <button onclick="nav('tree', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">📦 Árvores/Locais</button>
-            <button onclick="nav('tasks', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">✅ Tarefas</button>
-            <button onclick="nav('goals', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🏆 Metas 2026</button>
-            <button onclick="nav('focus', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🍅 Foco</button>
-            <button onclick="nav('vault', this)" class="nav-btn w-full text-left p-3 rounded-xl font-bold flex items-center gap-3 transition-all hover:bg-white/5 text-slate-400 text-sm">🔐 Cofre</button>
-        </div>
-        
-        <div class="pt-6 border-t border-white/5">
-            <button onclick="generateReportIA()" class="w-full bg-emerald-600/10 text-emerald-400 p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 mb-2">🤖 Relatório IA</button>
-            <button onclick="exportData()" class="w-full text-slate-500 text-[9px] uppercase font-bold text-center">Backup JSON</button>
-        </div>
-    </nav>
+      reader.onload = (e) => {
+        const workbook = XLSX.read(e.target.result, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
-    <main id="app-page" class="hidden lg:ml-72 p-6 lg:p-10 max-w-7xl mx-auto pb-32 lg:pb-12 z-10 relative">
-        
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-            <div>
-                <h2 id="view-title" class="text-3xl font-extrabold tracking-tight text-white uppercase">Central de Comando</h2>
-                <div class="flex gap-4 mt-1 items-center">
-                    <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded" id="date-now"></span>
-                </div>
-            </div>
-            <button onclick="togglePrivacy()" class="w-10 h-10 glass rounded-xl flex items-center justify-center text-lg hover:bg-white/10 transition" id="priv-btn">👁️</button>
-        </header>
+        let total = 0;
+        let classificados = 0;
+        let pendentes = 0;
 
-        <section id="dash" class="tab-content active space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                <div id="survival-card" class="glass p-8 rounded-[35px] relative overflow-hidden group transition-all duration-500 border-t border-white/5">
-                    <div class="absolute right-0 top-0 w-32 h-32 bg-blue-600/10 blur-[60px] rounded-full"></div>
-                    <div class="relative z-10">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Fluxo de Caixa</p>
-                        <h3 id="dash-saldo" class="text-4xl font-black blur-secret text-white">R$ 0,00</h3>
-                        <div class="mt-4 flex items-center justify-between">
-                            <span id="runway-badge" class="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black uppercase text-slate-400">Calculando...</span>
-                        </div>
-                    </div>
-                </div>
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row[0]) continue; // ignora linha vazia
 
-                <div class="glass p-8 rounded-[35px] border-l-4 border-emerald-500 relative flex flex-col justify-between">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Produtividade Hoje</p>
-                        <div class="flex items-end gap-2">
-                            <h3 id="dash-task-perc" class="text-4xl font-black text-emerald-400">0%</h3>
-                            <span class="text-xs font-bold text-slate-500 mb-2">Concluído</span>
-                        </div>
-                    </div>
-                    <div class="w-full h-3 bg-slate-800 rounded-full mt-4 overflow-hidden">
-                        <div id="dash-task-bar" class="h-full bg-emerald-500 transition-all duration-1000" style="width: 0%"></div>
-                    </div>
-                    <p id="dash-task-count" class="text-[10px] text-slate-500 mt-2 font-bold uppercase">0 Tarefas Pendentes</p>
-                </div>
+          total++;
 
-                <div class="glass p-8 rounded-[35px] border-l-4 border-purple-500 relative">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Inventário Global (Árvores)</p>
-                    <h3 id="dash-tree-perc" class="text-4xl font-black text-purple-400">0%</h3>
-                    <p class="text-xs text-slate-500 mt-1">Média de conclusão de locais</p>
-                    <div class="absolute bottom-0 left-0 w-full h-1.5 bg-slate-700/50">
-                        <div id="dash-tree-bar" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div>
-                    </div>
-                </div>
+          const colC = row[2]; // classificação
+          const colD = row[3];
+          const colE = row[4];
 
-                <div class="glass p-6 rounded-[35px] flex items-center justify-between border-l-4 border-orange-500 relative overflow-hidden">
-                    <div class="z-10">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status Pessoal</p>
-                        <div class="flex gap-4">
-                            <button onclick="setMood('🔥')" class="text-3xl hover:scale-125 transition grayscale hover:grayscale-0" title="Alta Energia">🔥</button>
-                            <button onclick="setMood('🧠')" class="text-3xl hover:scale-125 transition grayscale hover:grayscale-0" title="Focado">🧠</button>
-                            <button onclick="setMood('💤')" class="text-3xl hover:scale-125 transition grayscale hover:grayscale-0" title="Cansado">💤</button>
-                        </div>
-                        <p id="last-mood" class="text-[10px] font-bold text-slate-500 mt-2 uppercase">-</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+          if (colC || colD || colE) {
+            classificados++;
+          } else {
+            pendentes++;
+          }
+        }
 
-        <section id="fin" class="tab-content space-y-6">
-            <div class="flex items-center justify-between glass p-2 rounded-2xl max-w-md mx-auto mb-8">
-                <button onclick="changeMonth(-1)" class="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 font-bold">❮</button>
-                <div class="text-center">
-                    <h3 id="month-label" class="font-black text-lg text-white uppercase tracking-widest">JANEIRO</h3>
-                    <p id="year-label" class="text-[10px] font-bold text-blue-500">2026</p>
-                </div>
-                <button onclick="changeMonth(1)" class="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 font-bold">❯</button>
-            </div>
+        const progresso = total === 0 ? 0 : Math.round((classificados / total) * 100);
 
-            <div class="glass p-8 rounded-[40px] border border-blue-500/10">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    <div class="md:col-span-5 space-y-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-2">Descrição</label>
-                        <input type="text" id="fin-desc" placeholder="Ex: Cliente Novo" class="w-full p-3 rounded-xl text-sm font-bold">
-                    </div>
-                    <div class="md:col-span-3 space-y-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-2">Valor</label>
-                        <input type="number" id="fin-val" placeholder="0.00" class="w-full p-3 rounded-xl text-sm font-bold">
-                    </div>
-                    <div class="md:col-span-2 space-y-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-2">Parcelas</label>
-                        <input type="number" id="fin-parc" placeholder="1" value="1" min="1" class="w-full p-3 rounded-xl text-sm font-bold">
-                    </div>
-                    <div class="md:col-span-2 flex gap-2">
-                        <button onclick="saveFin('entrada')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl font-bold text-xl">+</button>
-                        <button onclick="saveFin('saida')" class="flex-1 bg-red-600 hover:bg-red-500 text-white p-3 rounded-xl font-bold text-xl">-</button>
-                    </div>
-                </div>
-                <div class="flex gap-2 mt-4 ml-2">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="fin-recur" class="w-4 h-4 accent-blue-500 rounded">
-                        <span class="text-xs font-bold text-slate-400">Recorrente (Fixo Mensal)</span>
-                    </label>
-                </div>
-            </div>
+        console.log({ total, classificados, pendentes, progresso });
 
-            <div class="glass rounded-[40px] overflow-hidden min-h-[300px]">
-                <div class="bg-white/5 p-4 flex justify-between items-center border-b border-white/5">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Extrato do Mês</span>
-                    <span id="month-balance" class="text-xs font-bold text-white bg-slate-800 px-3 py-1 rounded-lg">R$ 0,00</span>
-                </div>
-                <div id="fin-list" class="divide-y divide-white/5 max-h-[500px] overflow-y-auto custom-scroll p-2"></div>
-            </div>
-        </section>
+        atualizarFirebase(total, pendentes, progresso);
+      };
 
-        <section id="tree" class="tab-content space-y-8">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-black text-white uppercase tracking-tighter">Locais & Inventários</h3>
-                <button onclick="createNewTree()" class="bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-purple-500/30 transition">+ Adicionar Local</button>
-            </div>
-            <div id="trees-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-        </section>
+      reader.readAsArrayBuffer(file);
+    }
 
-        <section id="tasks" class="tab-content space-y-8">
-            <div class="flex items-center justify-center gap-4 mb-4">
-                <button onclick="changeDay(-1)" class="p-2 glass rounded-xl hover:bg-white/10">◀</button>
-                <div class="text-center">
-                    <span id="task-date-display" class="font-black text-white text-lg block">HOJE</span>
-                    <span id="lock-status" class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">EDITÁVEL</span>
-                </div>
-                <button onclick="changeDay(1)" class="p-2 glass rounded-xl hover:bg-white/10">▶</button>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="glass p-2 rounded-[25px] flex gap-2 items-center pr-4 border-blue-500/20 task-input-area">
-                        <input type="text" id="task-in" placeholder="Nova Tarefa Avulsa..." class="flex-1 bg-transparent border-none shadow-none p-4 text-sm font-bold focus:ring-0">
-                        <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl font-bold flex items-center justify-center">+</button>
-                    </div>
-                    <div id="task-list" class="space-y-3"></div>
-                    
-                    <div class="glass p-6 rounded-[35px] border-t-2 border-orange-500/20 mt-8 relative overflow-hidden">
-                        <div class="flex justify-between items-center mb-4 relative z-10">
-                            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Rotina Diária (Hábitos)</h4>
-                            <span class="text-[9px] text-slate-600">Repetem todos os dias</span>
-                        </div>
-                        <div id="habit-list" class="space-y-2 relative z-10"></div>
-                        <div class="flex gap-2 mt-4 task-input-area relative z-10">
-                            <input type="text" id="habit-in" placeholder="Novo Hábito Recorrente..." class="flex-1 bg-slate-900 p-2 rounded-lg text-xs font-bold">
-                            <button onclick="addGlobalHabit()" class="bg-slate-700 px-3 rounded-lg font-bold text-xs">+ Rotina</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="glass p-8 rounded-[40px] h-fit sticky top-6">
-                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Status do Dia</h4>
-                    <div class="flex justify-center mb-8 relative">
-                        <svg class="w-32 h-32 transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none" />
-                            <circle id="progress-circle" cx="64" cy="64" r="56" stroke="#10b981" stroke-width="8" fill="none" stroke-dasharray="351" stroke-dashoffset="351" class="transition-all duration-1000 ease-out" />
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center flex-col">
-                            <span id="analytics-perc" class="text-2xl font-black text-white">0%</span>
-                        </div>
-                    </div>
-                    <button onclick="finalizeDay()" class="w-full bg-slate-800 hover:bg-slate-700 p-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-white/10 transition">Finalizar Dia (+XP)</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="goals" class="tab-content space-y-6">
-            <h3 class="text-2xl font-black text-white mb-6 uppercase tracking-tighter pl-2">Mural de Conquistas 2026</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="goals-list"></div>
-            <button onclick="addGoal()" class="w-full py-6 rounded-[30px] border-2 border-dashed border-white/10 text-slate-500 font-bold hover:border-white/30 hover:text-white transition uppercase text-xs tracking-widest">+ Adicionar Grande Meta</button>
-        </section>
-
-        <section id="focus" class="tab-content">
-            <div class="flex flex-col items-center justify-center min-h-[60vh]">
-                <div class="relative mb-10 group">
-                    <div class="absolute inset-0 bg-blue-600/20 blur-[80px] rounded-full group-hover:bg-blue-600/30 transition duration-700"></div>
-                    <div id="pomo-ring" class="relative w-80 h-80 rounded-full border-[12px] border-white/5 bg-[#020617] flex items-center justify-center shadow-2xl">
-                        <span id="timer-display" class="text-8xl font-black text-white tabular-nums tracking-tighter">25:00</span>
-                    </div>
-                </div>
-                <div class="flex gap-6">
-                    <button onclick="startPomo()" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-3xl font-black shadow-lg shadow-blue-900/40 tracking-widest">INICIAR</button>
-                    <button onclick="resetPomo()" class="bg-white/5 hover:bg-white/10 text-slate-300 px-12 py-5 rounded-3xl font-black border border-white/5 tracking-widest">ZERAR</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="vault" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass p-8 rounded-[40px]">
-                    <h4 class="font-black mb-6 text-sm text-yellow-500">📝 Bloco de Notas</h4>
-                    <textarea id="note-in" class="w-full bg-slate-900/50 p-4 rounded-2xl h-32 outline-none mb-4 text-sm font-medium resize-none border border-white/5"></textarea>
-                    <button onclick="saveNote()" class="w-full bg-yellow-600/10 text-yellow-500 hover:bg-yellow-600 hover:text-white p-3 rounded-xl font-black text-xs transition">SALVAR NOTA</button>
-                    <div id="note-list" class="mt-6 space-y-3 max-h-60 overflow-y-auto custom-scroll"></div>
-                </div>
-                <div class="glass p-8 rounded-[40px]">
-                    <h4 class="font-black mb-6 text-sm text-blue-500">📂 Arquivos & Uploads</h4>
-                    <input type="file" id="file-up" onchange="uploadFile(event)" class="hidden">
-                    <div onclick="document.getElementById('file-up').click()" class="w-full h-32 bg-slate-900/50 border-2 border-dashed border-blue-500/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 transition">
-                        <span class="text-2xl mb-2">☁️</span>
-                        <span class="text-[10px] font-bold uppercase text-slate-500">Clique para Enviar</span>
-                    </div>
-                    <div id="file-list" class="mt-6 space-y-3 max-h-60 overflow-y-auto custom-scroll"></div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <nav class="lg:hidden fixed bottom-6 left-6 right-6 h-20 glass rounded-[30px] z-[90] flex items-center justify-around px-4 border border-white/10 shadow-2xl backdrop-blur-xl bg-[#0f172a]/80">
-        <button onclick="nav('dash')" class="text-2xl opacity-60">📊</button>
-        <button onclick="nav('fin')" class="text-2xl opacity-60">💰</button>
-        <button onclick="nav('tree')" class="text-2xl opacity-60">📦</button>
-        <button onclick="nav('tasks')" class="text-2xl opacity-60">✅</button>
-        <button onclick="nav('goals')" class="text-2xl opacity-60">🏆</button>
-    </nav>
-
-    <script>
-        // CONFIGURAÇÃO FIREBASE (Não altere se estiver funcionando)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCdxLMjKdBN_1uIDk4YXfDIlRbNchndM5s",
-            authDomain: "inventario-visao.firebaseapp.com",
-            projectId: "inventario-visao",
-            storageBucket: "inventario-visao.firebasestorage.app",
-            messagingSenderId: "828286373134",
-            appId: "1:828286373134:web:9bafa5872cdf124bfddb5f"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-
-        // ESTADO DO APLICATIVO
-        let state = {
-            view: 'dash', privacy: false,
-            currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear(),
-            selectedDate: new Date().toISOString().split('T')[0],
-            finData: [], tasksData: [], 
-            habitsLog: [], 
-            globalHabits: [],
-            notesData: [], filesData: [], goalsData: [],
-            xp: 0, level: 1,
-            trees: [], 
-            pomoTime: 25 * 60, pomoInterval: null
-        };
-        const mesesStr = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-
-        // ATALHOS DE TECLADO
-        document.addEventListener('keydown', (e) => {
-            if((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleGodMode(); }
-            if(e.key === 'Escape') document.getElementById('god-mode').classList.remove('open');
-            if(document.getElementById('god-mode').classList.contains('open') && e.key === 'Enter') executeGodCommand();
+    function atualizarFirebase(total, pendentes, progresso) {
+      db.collection("trees")
+        .doc("AGUAS_CLARAS") // MUDE O ID DA ÁRVORE
+        .set({
+          total: total,
+          pending: pendentes,
+          progress: progresso,
+          updatedAt: new Date()
+        }, { merge: true })
+        .then(() => {
+          alert("🔥 Progresso atualizado com sucesso!");
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Erro ao atualizar Firebase");
         });
+    }
+  </script>
 
-        // LOGIN
-        function handleLogin() {
-            if(document.getElementById('user').value === "leonardo" && document.getElementById('pass').value === "pinto2026") {
-                document.getElementById('login-page').style.display = 'none';
-                document.querySelector('nav').classList.remove('hidden');
-                document.getElementById('app-page').classList.remove('hidden');
-                init();
-            } else alert("Acesso Negado.");
-        }
-
-        // INICIALIZAÇÃO E LEITURA DE DADOS
-        function init() {
-            db.collection("financeiro").onSnapshot(s => { state.finData = s.docs.map(d => ({id:d.id,...d.data()})); renderFin(); updateSurvivalUI(); });
-            db.collection("tarefas").onSnapshot(s => { state.tasksData = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
-            
-            // Leitura dos Logs de Hábitos
-            db.collection("habitos_logs").onSnapshot(s => { state.habitsLog = s.docs.map(d => ({id:d.id,...d.data()})); renderTasks(); });
-            
-            db.collection("notas").orderBy("created", "desc").onSnapshot(s => { state.notesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
-            db.collection("arquivos").orderBy("created", "desc").onSnapshot(s => { state.filesData = s.docs.map(d => ({id:d.id,...d.data()})); renderVault(); });
-            db.collection("metas").onSnapshot(s => { state.goalsData = s.docs.map(d => ({id:d.id,...d.data()})); renderGoals(); });
-            
-            // Dados Globais (XP, Nível, Árvores e Lista de Hábitos)
-            db.collection("system_stats").doc("main").onSnapshot(d => { 
-                if(d.exists) { 
-                    state.xp = d.data().xp || 0; 
-                    state.level = d.data().level || 1; 
-                    if (d.data().trees) state.trees = d.data().trees;
-                    else if (d.data().tree) state.trees = [{ id: 'master', name: 'Árvore Mestra', total: d.data().tree.total, pending: d.data().tree.pending }];
-                    else state.trees = [];
-
-                    state.globalHabits = d.data().globalHabits || [];
-
-                    updateXPUI();
-                    renderTrees();
-                    renderTasks(); 
-                }
-            });
-            updateDate();
-        }
-
-        // SISTEMA DE XP
-        function gainXP(amount) {
-            state.xp += amount;
-            if(state.xp >= state.level * 500) { state.level++; state.xp = 0; showToast(`Nível ${state.level}!`); } else { showToast(`+${amount} XP`); }
-            db.collection("system_stats").doc("main").set({xp: state.xp, level: state.level}, {merge: true});
-            updateXPUI();
-        }
-        function updateXPUI() {
-            document.getElementById('lvl-display').innerText = state.level;
-            document.getElementById('xp-display').innerText = `${state.xp} XP`;
-            document.getElementById('xp-bar-visual').style.width = `${(state.xp/(state.level*500))*100}%`;
-        }
-        function showToast(msg) {
-            const t = document.getElementById('xp-toast'); document.getElementById('xp-msg').innerText = msg;
-            t.classList.remove('translate-x-full'); setTimeout(() => t.classList.add('translate-x-full'), 3000);
-        }
-
-        // ÁRVORES E LOCAIS
-        function renderTrees() {
-            const container = document.getElementById('trees-container');
-            container.innerHTML = ""; 
-            let totalGlobal = 0; let pendingGlobal = 0;
-            state.trees.forEach((tree, index) => {
-                totalGlobal += tree.total; pendingGlobal += tree.pending;
-                const done = tree.total - tree.pending;
-                const perc = tree.total > 0 ? Math.round((done / tree.total) * 100) : 0;
-                const offset = 753 - (753 * perc) / 100;
-                const card = document.createElement('div');
-                card.className = "glass p-8 rounded-[40px] text-center border border-purple-500/20 relative group";
-                card.innerHTML = `
-                    <button onclick="deleteTree(${index})" class="absolute top-4 right-4 text-red-500 opacity-0 group-hover:opacity-100 transition text-[10px]">Excluir</button>
-                    <h3 class="text-xl font-black text-white mb-2 uppercase tracking-tighter">${tree.name}</h3>
-                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Progresso</p>
-                    <div class="relative w-48 h-48 mx-auto mb-6">
-                        <svg class="w-full h-full transform -rotate-90">
-                            <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="none" />
-                            <circle cx="96" cy="96" r="88" stroke="#a855f7" stroke-width="8" fill="none" stroke-dasharray="753" stroke-dashoffset="${offset}" class="tree-progress" stroke-linecap="round" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-3xl font-black text-white">${perc}%</span>
-                            <span class="text-[9px] uppercase font-bold text-slate-500 mt-1">Concluído</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-6">
-                        <div class="bg-white/5 p-2 rounded-xl">
-                            <p class="text-[9px] font-bold text-slate-500 uppercase">Total</p>
-                            <p class="text-lg font-black text-white">${tree.total}</p>
-                        </div>
-                        <div class="bg-white/5 p-2 rounded-xl border border-purple-500/30">
-                            <p class="text-[9px] font-bold text-purple-400 uppercase">Pendente</p>
-                            <p class="text-lg font-black text-purple-400">${tree.pending}</p>
-                        </div>
-                    </div>
-                    <div class="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                        <p class="text-[10px] font-bold text-slate-300 mb-2">Abater Pendentes</p>
-                        <div class="flex gap-2">
-                            <input type="number" id="tree-in-${index}" placeholder="Qtd" class="flex-1 p-2 rounded-lg text-center font-bold text-sm">
-                            <button onclick="updateTreeProgress(${index})" class="bg-purple-600 hover:bg-purple-500 text-white px-4 rounded-lg font-black text-xs shadow-lg shadow-purple-900/30">OK</button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-            const doneGlobal = totalGlobal - pendingGlobal;
-            const percGlobal = totalGlobal > 0 ? Math.round((doneGlobal / totalGlobal) * 100) : 0;
-            document.getElementById('dash-tree-perc').innerText = `${percGlobal}%`;
-            document.getElementById('dash-tree-bar').style.width = `${percGlobal}%`;
-        }
-        function createNewTree() {
-            const nome = prompt("Nome do Local (Ex: São Luís):");
-            if (!nome) return;
-            const total = prompt("Total de Itens:");
-            if (!total) return;
-            const novaArvore = { id: Date.now().toString(), name: nome, total: parseInt(total), pending: parseInt(total) };
-            const novaLista = [...state.trees, novaArvore];
-            db.collection("system_stats").doc("main").update({ trees: novaLista });
-            showToast("Local Criado!");
-        }
-        function updateTreeProgress(index) {
-            const input = document.getElementById(`tree-in-${index}`);
-            const val = parseInt(input.value);
-            if(!val || val <= 0) return;
-            const arvore = state.trees[index];
-            let newPending = arvore.pending - val;
-            if(newPending < 0) newPending = 0;
-            state.trees[index].pending = newPending;
-            db.collection("system_stats").doc("main").update({ trees: state.trees });
-            gainXP(val * 2); input.value = ''; showToast(`${val} itens abatidos!`);
-        }
-        function deleteTree(index) {
-            if(confirm("Deseja apagar este local?")) {
-                const novaLista = state.trees.filter((_, i) => i !== index);
-                db.collection("system_stats").doc("main").update({ trees: novaLista });
-            }
-        }
-
-        // METAS
-        async function addGoal() {
-            const t = prompt("Qual sua meta? (Ex: Comprar Carro):");
-            if(t) await db.collection("metas").add({title: t, done: false});
-        }
-        function renderGoals() {
-            document.getElementById('goals-list').innerHTML = state.goalsData.map(g => `
-                <div class="glass p-6 rounded-[30px] border border-white/5 relative group">
-                    <h4 class="font-bold text-lg text-white mb-2">${g.title}</h4>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">${g.done ? 'CONQUISTADO' : 'EM ANDAMENTO'}</p>
-                    <button onclick="db.collection('metas').doc('${g.id}').update({done: !${g.done}})" class="w-full py-2 rounded-xl text-xs font-black uppercase ${g.done ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}">${g.done ? 'Concluída' : 'Marcar Conclusão'}</button>
-                    <button onclick="db.collection('metas').doc('${g.id}').delete()" class="absolute top-4 right-4 text-red-500 opacity-0 group-hover:opacity-100 transition">✕</button>
-                </div>
-            `).join('');
-        }
-
-        // FINANCEIRO
-        function updateSurvivalUI() {
-            let saldoMes = 0;
-            state.finData.forEach(f => {
-                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
-                const val = f.recorrente ? f.valorTotal : (f.valorTotal / f.parcelas);
-                if(f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas) { f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val; }
-            });
-            const badge = document.getElementById('runway-badge');
-            const card = document.getElementById('survival-card');
-            if(saldoMes < 0) { badge.innerText = "DÉFICIT"; badge.className = "px-3 py-1 bg-red-500 rounded-lg text-[9px] font-black uppercase text-white"; card.classList.add('survival-danger'); }
-            else if(saldoMes > 5000) { badge.innerText = "SOBERANIA"; badge.className = "px-3 py-1 bg-emerald-500 rounded-lg text-[9px] font-black uppercase text-white"; card.classList.add('survival-safe'); }
-            else { badge.innerText = "ESTÁVEL"; badge.className = "px-3 py-1 bg-white/10 rounded-lg text-[9px] font-black uppercase text-slate-400"; card.classList.remove('survival-danger', 'survival-safe'); }
-            document.getElementById('dash-saldo').innerText = `R$ ${saldoMes.toFixed(2)}`;
-            document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2)}`;
-        }
-        async function saveFin(tipo) {
-            const desc = document.getElementById('fin-desc').value;
-            const valorTotal = parseFloat(document.getElementById('fin-val').value);
-            const parcInput = parseInt(document.getElementById('fin-parc').value);
-            const recur = document.getElementById('fin-recur').checked;
-            if(!desc || !valorTotal) return alert("Preencha todos os campos!");
-            let parcelas = recur ? 12 : (parcInput > 0 ? parcInput : 1);
-            await db.collection("financeiro").add({desc, valorTotal, parcelas, recorrente: recur, tipo, mesIn: state.currentMonth, anoIn: state.currentYear, created: new Date()});
-            gainXP(15); document.getElementById('fin-desc').value = ''; document.getElementById('fin-val').value = '';
-        }
-        function renderFin() {
-            document.getElementById('month-label').innerText = mesesStr[state.currentMonth];
-            document.getElementById('year-label').innerText = state.currentYear;
-            let saldoMes = 0;
-            const filtrados = state.finData.filter(f => {
-                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
-                return f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas;
-            });
-            document.getElementById('fin-list').innerHTML = filtrados.map(f => {
-                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
-                const val = f.recorrente ? f.valorTotal : (f.valorTotal/f.parcelas);
-                f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val;
-                return `<div class="p-4 flex justify-between items-center hover:bg-white/5 transition rounded-xl"><div><p class="font-bold text-sm text-white">${f.desc}</p><p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-0.5">${f.recorrente?'🔄 RECORRENTE':`PARCELA ${diff+1}/${f.parcelas}`}</p></div><div class="text-right"><p class="font-bold ${f.tipo==='entrada'?'text-emerald-400':'text-red-400'} blur-secret text-sm">R$ ${val.toFixed(2)}</p><button onclick="deleteFin('${f.id}')" class="text-[8px] text-slate-600 hover:text-red-500 uppercase font-black">x</button></div></div>`;
-            }).join('');
-        }
-        function changeMonth(dir) { state.currentMonth += dir; if(state.currentMonth>11){state.currentMonth=0;state.currentYear++} if(state.currentMonth<0){state.currentMonth=11;state.currentYear--} renderFin(); updateSurvivalUI(); }
-        async function deleteFin(id) { if(confirm("Apagar registro?")) await db.collection("financeiro").doc(id).delete(); }
-
-        // --- TAREFAS & ROTINA (LÓGICA CORRIGIDA) ---
-        function changeDay(dir) { const d = new Date(state.selectedDate); d.setDate(d.getDate() + dir); state.selectedDate = d.toISOString().split('T')[0]; renderTasks(); }
-        async function addTask() { const t=document.getElementById('task-in').value; if(t){ await db.collection("tarefas").add({text:t, done:false, date:state.selectedDate}); document.getElementById('task-in').value=''; } }
-        async function toggleCheck(col, id, status) { await db.collection(col).doc(id).update({done: status}); if(status) gainXP(10); }
-
-        // Adicionar novo hábito na lista GLOBAL
-        async function addGlobalHabit() { 
-            const h = document.getElementById('habit-in').value; 
-            if(h){ 
-                const newList = [...state.globalHabits, h];
-                await db.collection("system_stats").doc("main").update({ globalHabits: newList }); 
-                document.getElementById('habit-in').value=''; 
-            } 
-        }
-
-        async function removeGlobalHabit(habitName) {
-            if(confirm("Remover este hábito da sua rotina?")) {
-                const newList = state.globalHabits.filter(h => h !== habitName);
-                await db.collection("system_stats").doc("main").update({ globalHabits: newList }); 
-            }
-        }
-
-        // --- CORREÇÃO DO BUG DO CHECKLIST DE HÁBITOS ---
-        async function toggleHabitLog(habitName) {
-            // 1. Procura se já existe um log para esse hábito HOJE
-            const existingLog = state.habitsLog.find(h => 
-                h.text === habitName && 
-                h.date === state.selectedDate
-            );
-
-            if (existingLog) {
-                // Se existe, inverte o status (de true para false ou vice-versa)
-                await db.collection("habitos_logs").doc(existingLog.id).update({
-                    done: !existingLog.done
-                });
-            } else {
-                // Se não existe, cria como FEITO (true)
-                await db.collection("habitos_logs").add({
-                    text: habitName,
-                    done: true,
-                    date: state.selectedDate
-                });
-                gainXP(20);
-            }
-        }
-
-        function renderTasks() {
-            const isToday = state.selectedDate === new Date().toISOString().split('T')[0];
-            document.getElementById('task-date-display').innerText = isToday ? "HOJE" : state.selectedDate.split('-').reverse().join('/');
-            document.getElementById('lock-status').innerText = isToday ? "EDITÁVEL" : "LEITURA";
-            
-            // Renderiza Tarefas Avulsas
-            const tasks = state.tasksData.filter(t => t.date === state.selectedDate);
-            document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 group ${isToday?'':'opacity-50 pointer-events-none'}"><input type="checkbox" ${t.done?'checked':''} onchange="toggleCheck('tarefas','${t.id}',this.checked)" class="w-5 h-5 accent-blue-600 rounded cursor-pointer"><span class="flex-1 text-sm ${t.done?'line-through opacity-40':''}">${t.text}</span>${isToday?`<button onclick="db.collection('tarefas').doc('${t.id}').delete()" class="opacity-0 group-hover:opacity-100 text-red-400 text-xs">✕</button>`:''}</div>`).join('');
-
-            // Renderiza Hábitos Recorrentes (Globais)
-            const habitsLogsToday = state.habitsLog.filter(h => h.date === state.selectedDate);
-            
-            document.getElementById('habit-list').innerHTML = state.globalHabits.map(habitName => {
-                const log = habitsLogsToday.find(h => h.text === habitName);
-                const isDone = log ? log.done : false; // Se tiver log, usa o status, senão é false
-
-                return `
-                <div class="flex justify-between items-center p-2 hover:bg-white/5 rounded-lg group ${isToday?'':'opacity-50 pointer-events-none'}">
-                    <span class="text-xs font-bold text-slate-300 ${isDone?'text-emerald-400':''}">${habitName}</span>
-                    <div class="flex gap-2 items-center">
-                        <button onclick="removeGlobalHabit('${habitName}')" class="text-slate-600 hover:text-red-500 mr-2 opacity-0 group-hover:opacity-100 transition">🗑️</button>
-                        
-                        <button onclick="toggleHabitLog('${habitName}')" class="text-[10px] px-3 py-1 rounded font-black uppercase transition ${isDone ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
-                            ${isDone ? 'FEITO' : 'FAZER'}
-                        </button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            // Cálculos para Dashboard
-            const total = tasks.length + state.globalHabits.length; 
-            const doneCount = tasks.filter(t=>t.done).length + habitsLogsToday.filter(h=>h.done && state.globalHabits.includes(h.text)).length;
-            const perc = total > 0 ? Math.round((doneCount/total)*100) : 0;
-            const pending = total - doneCount;
-
-            document.getElementById('progress-circle').style.strokeDashoffset = 351 - (351*perc)/100;
-            document.getElementById('analytics-perc').innerText = `${perc}%`;
-            document.getElementById('dash-task-perc').innerText = `${perc}%`;
-            document.getElementById('dash-task-bar').style.width = `${perc}%`;
-            document.getElementById('dash-task-count').innerText = `${pending} Pendentes`;
-        }
-        function finalizeDay() { if(confirm("Finalizar dia?")) { gainXP(100); alert("Dia Finalizado! +100 XP"); } }
-
-        // UTILITÁRIOS
-        function startPomo(){ if(state.pomoInterval)return; state.pomoInterval=setInterval(()=>{ state.pomoTime--; const m=Math.floor(state.pomoTime/60).toString().padStart(2,'0'); const s=(state.pomoTime%60).toString().padStart(2,'0'); document.getElementById('timer-display').innerText=`${m}:${s}`; if(state.pomoTime<=0){resetPomo(); gainXP(50); alert("Foco!");} },1000); }
-        function resetPomo(){ clearInterval(state.pomoInterval); state.pomoInterval=null; state.pomoTime=25*60; document.getElementById('timer-display').innerText="25:00"; }
-        async function saveNote(){ const t=document.getElementById('note-in').value; if(t){ await db.collection("notas").add({text:t, created:new Date()}); document.getElementById('note-in').value=''; gainXP(5); } }
-        async function uploadFile(e){ const f=e.target.files[0]; const ref=storage.ref(`v10/${Date.now()}_${f.name}`); await ref.put(f); const u=await ref.getDownloadURL(); await db.collection("arquivos").add({name:f.name, url:u, created:new Date()}); gainXP(10); }
-        function renderVault(){ document.getElementById('note-list').innerHTML=state.notesData.map(n=>`<div class="p-3 bg-slate-900/50 border border-white/5 rounded-xl text-xs text-slate-300 relative group">${n.text}<button onclick="db.collection('notas').doc('${n.id}').delete()" class="absolute top-1 right-2 text-red-500 opacity-0 group-hover:opacity-100">x</button></div>`).join(''); document.getElementById('file-list').innerHTML=state.filesData.map(f=>`<a href="${f.url}" target="_blank" class="block p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400 truncate hover:bg-blue-500/20 transition">${f.name}</a>`).join(''); }
-        
-        function nav(id, btn){ document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById(id).classList.add('active'); if(btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');} document.getElementById('view-title').innerText=id==='dash'?'Central de Comando':id.toUpperCase(); }
-        function togglePrivacy(){ state.privacy=!state.privacy; document.querySelectorAll('.blur-secret').forEach(el=>state.privacy?el.classList.add('blur-secret'):el.classList.remove('blur-secret')); }
-        function updateDate(){ const n=new Date(); document.getElementById('date-now').innerText=n.toLocaleDateString('pt-br',{weekday:'short',day:'2-digit',month:'short'}); }
-        async function setMood(emoji){ await db.collection("humor").add({emoji, date: new Date()}); gainXP(5); }
-        function generateReportIA() { const prompt = `RELATÓRIO LEONARDO 10.1: Saldo: ${document.getElementById('dash-saldo').innerText}. Score: ${document.getElementById('analytics-perc').innerText}. Nível: ${state.level}. Analise e me dê 3 ordens.`; navigator.clipboard.writeText(prompt); alert("Prompt Copiado!"); }
-        function exportData(){ const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(state)); const n=document.createElement('a'); n.href=s; n.download=`backup_leo_v10_1_${Date.now()}.json`; document.body.appendChild(n); n.click(); n.remove(); }
-        
-        // MODO COMANDO
-        function toggleGodMode() { document.getElementById('god-mode').classList.toggle('open'); const i = document.getElementById('god-input'); if(document.getElementById('god-mode').classList.contains('open')) i.focus(); else i.value=''; }
-        function executeGodCommand() {
-            const v = document.getElementById('god-input').value; const cmd = v.split(' ')[0]; const c = v.substring(cmd.length + 1);
-            if(cmd === '/t') { db.collection("tarefas").add({text: c, done: false, date: state.selectedDate}); showToast("Tarefa Criada"); }
-            if(cmd === '/n') { db.collection("notas").add({text: c, created: new Date()}); showToast("Nota Criada"); }
-            toggleGodMode();
-        }
-    </script>
 </body>
 </html>
