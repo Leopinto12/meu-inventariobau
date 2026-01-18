@@ -20,7 +20,7 @@
 
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f8fafc; overflow-x: hidden; }
         
-        /* Glassmorphism Profissional (Mais sutil e limpo) */
+        /* Glassmorphism Profissional */
         .glass { 
             background: rgba(30, 41, 59, 0.7); 
             backdrop-filter: blur(12px); 
@@ -60,12 +60,13 @@
         
         .god-overlay { display: none; }
         .god-overlay.open { display: flex; animation: fadeIn 0.1s ease-out; }
+
+        /* Modal de Exportação */
+        .modal-overlay { display: none; }
+        .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease-out; }
         
         .survival-danger { border: 1px solid #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.15); }
         .survival-safe { border: 1px solid #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.1); }
-
-        .logo-sidebar { width: 60px; margin: 0 auto; opacity: 0.8; transition: 0.3s; filter: grayscale(20%); }
-        .logo-sidebar:hover { opacity: 1; filter: grayscale(0%); transform: scale(1.02); }
 
     </style>
 </head>
@@ -89,6 +90,50 @@
             <input type="text" id="god-input" placeholder="Comando de sistema..." class="w-full bg-transparent text-xl font-medium text-white outline-none border-none font-mono" autocomplete="off">
             <div class="mt-4 flex gap-4 text-[10px] text-slate-500 font-mono uppercase">
                 <span>/t [tarefa]</span><span>/n [nota]</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-modal" class="modal-overlay fixed inset-0 z-[2500] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="glass p-8 rounded-3xl w-full max-w-md border border-blue-500/20 shadow-2xl relative">
+            <button onclick="closeExportModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition">✕</button>
+            
+            <h3 class="text-xl font-bold text-white mb-1">Exportar Relatório</h3>
+            <p class="text-xs text-slate-400 mb-6">Configure o período e o tipo de dados para o CSV.</p>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">De (Mês/Ano)</label>
+                        <div class="flex gap-2">
+                            <select id="exp-start-month" class="w-full p-2 rounded-lg text-xs"></select>
+                            <select id="exp-start-year" class="w-full p-2 rounded-lg text-xs"></select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Até (Mês/Ano)</label>
+                        <div class="flex gap-2">
+                            <select id="exp-end-month" class="w-full p-2 rounded-lg text-xs"></select>
+                            <select id="exp-end-year" class="w-full p-2 rounded-lg text-xs"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Filtrar Tipo</label>
+                    <select id="exp-type" class="w-full p-2.5 rounded-lg text-sm">
+                        <option value="all">📊 Todas as Transações</option>
+                        <option value="entrada">💰 Apenas Entradas</option>
+                        <option value="saida">💸 Apenas Saídas</option>
+                    </select>
+                </div>
+
+                <button onclick="generateAdvancedReport()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white p-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition mt-4 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Baixar CSV Excel
+                </button>
             </div>
         </div>
     </div>
@@ -207,11 +252,9 @@
                     <button onclick="changeMonth(1)" class="w-8 h-8 hover:bg-white/10 rounded-lg flex items-center justify-center text-slate-400 transition">❯</button>
                 </div>
 
-                <button onclick="exportFinCSV()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Exportar Relatório CSV
+                <button onclick="openExportModal()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition shadow-lg group">
+                    <span class="group-hover:text-emerald-400 transition">📥</span>
+                    Relatório Avançado
                 </button>
             </div>
 
@@ -385,7 +428,7 @@
 
         document.addEventListener('keydown', (e) => {
             if((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleGodMode(); }
-            if(e.key === 'Escape') document.getElementById('god-mode').classList.remove('open');
+            if(e.key === 'Escape') { document.getElementById('god-mode').classList.remove('open'); closeExportModal(); }
             if(document.getElementById('god-mode').classList.contains('open') && e.key === 'Enter') executeGodCommand();
         });
 
@@ -417,6 +460,7 @@
                 }
             });
             updateDate();
+            setupExportSelectors();
         }
 
         function gainXP(amount) {
@@ -443,7 +487,6 @@
                 totalGlobal += tree.total; pendingGlobal += tree.pending;
                 const done = tree.total - tree.pending;
                 const perc = tree.total > 0 ? Math.round((done / tree.total) * 100) : 0;
-                const offset = 753 - (753 * perc) / 100;
                 const card = document.createElement('div');
                 card.className = "glass p-6 rounded-3xl text-center border border-purple-500/10 relative group hover:border-purple-500/30 transition";
                 card.innerHTML = `
@@ -539,8 +582,8 @@
             if(saldoMes < 0) { badge.innerText = "DÉFICIT"; badge.className = "px-2.5 py-1 bg-red-500/20 text-red-400 rounded-md text-[10px] font-bold uppercase border border-red-500/30"; card.classList.add('survival-danger'); }
             else if(saldoMes > 5000) { badge.innerText = "SAUDÁVEL"; badge.className = "px-2.5 py-1 bg-emerald-500/20 text-emerald-400 rounded-md text-[10px] font-bold uppercase border border-emerald-500/30"; card.classList.add('survival-safe'); }
             else { badge.innerText = "ESTÁVEL"; badge.className = "px-2.5 py-1 bg-white/10 rounded-md text-[10px] font-bold uppercase text-slate-400 border border-white/5"; card.classList.remove('survival-danger', 'survival-safe'); }
-            document.getElementById('dash-saldo').innerText = `R$ ${saldoMes.toFixed(2)}`;
-            document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2)}`;
+            document.getElementById('dash-saldo').innerText = `R$ ${saldoMes.toFixed(2).replace('.', ',')}`;
+            document.getElementById('month-balance').innerText = `Saldo: R$ ${saldoMes.toFixed(2).replace('.', ',')}`;
         }
         async function saveFin(tipo) {
             const desc = document.getElementById('fin-desc').value;
@@ -564,39 +607,102 @@
                 const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
                 const val = f.recorrente ? f.valorTotal : (f.valorTotal/f.parcelas);
                 f.tipo === 'entrada' ? saldoMes += val : saldoMes -= val;
-                return `<div class="p-4 flex justify-between items-center hover:bg-white/5 transition first:rounded-t-none last:rounded-b-none border-b border-white/5 last:border-0"><div><p class="font-bold text-sm text-slate-200">${f.desc}</p><p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">${f.recorrente?'🔄 RECORRENTE':`PARCELA ${diff+1}/${f.parcelas}`}</p></div><div class="text-right flex items-center gap-3"><p class="font-bold ${f.tipo==='entrada'?'text-emerald-400':'text-red-400'} blur-secret text-sm">R$ ${val.toFixed(2)}</p><button onclick="deleteFin('${f.id}')" class="text-slate-600 hover:text-red-500 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div></div>`;
+                return `<div class="p-4 flex justify-between items-center hover:bg-white/5 transition first:rounded-t-none last:rounded-b-none border-b border-white/5 last:border-0"><div><p class="font-bold text-sm text-slate-200">${f.desc}</p><p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">${f.recorrente?'🔄 RECORRENTE':`PARCELA ${diff+1}/${f.parcelas}`}</p></div><div class="text-right flex items-center gap-3"><p class="font-bold ${f.tipo==='entrada'?'text-emerald-400':'text-red-400'} blur-secret text-sm">R$ ${val.toFixed(2).replace('.', ',')}</p><button onclick="deleteFin('${f.id}')" class="text-slate-600 hover:text-red-500 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div></div>`;
             }).join('');
         }
         function changeMonth(dir) { state.currentMonth += dir; if(state.currentMonth>11){state.currentMonth=0;state.currentYear++} if(state.currentMonth<0){state.currentMonth=11;state.currentYear--} renderFin(); updateSurvivalUI(); }
         async function deleteFin(id) { if(confirm("Apagar registro?")) await db.collection("financeiro").doc(id).delete(); }
 
-        // --- EXPORTAR CSV (NOVA FUNÇÃO) ---
-        function exportFinCSV() {
-            const filtered = state.finData.filter(f => {
-                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
-                return f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas;
+        // --- EXPORTAÇÃO AVANÇADA CSV ---
+
+        function setupExportSelectors() {
+            const months = mesesStr;
+            const years = [2024, 2025, 2026, 2027]; // Expanda conforme necessário
+
+            ['exp-start-month', 'exp-end-month'].forEach(id => {
+                const sel = document.getElementById(id);
+                months.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.text = m; sel.add(opt); });
+                sel.value = state.currentMonth;
             });
+            ['exp-start-year', 'exp-end-year'].forEach(id => {
+                const sel = document.getElementById(id);
+                years.forEach(y => { const opt = document.createElement('option'); opt.value = y; opt.text = y; sel.add(opt); });
+                sel.value = state.currentYear;
+            });
+        }
 
-            if (filtered.length === 0) return alert("Sem dados para exportar neste mês.");
+        function openExportModal() { document.getElementById('export-modal').classList.add('open'); }
+        function closeExportModal() { document.getElementById('export-modal').classList.remove('open'); }
 
+        function generateAdvancedReport() {
+            const startM = parseInt(document.getElementById('exp-start-month').value);
+            const startY = parseInt(document.getElementById('exp-start-year').value);
+            const endM = parseInt(document.getElementById('exp-end-month').value);
+            const endY = parseInt(document.getElementById('exp-end-year').value);
+            const typeFilter = document.getElementById('exp-type').value;
+
+            // Converter para timestamps para facilitar loop
+            let currentLoopDate = new Date(startY, startM, 1);
+            const endDateObj = new Date(endY, endM, 1);
+
+            let reportData = [];
+
+            // Loop por cada mês no intervalo
+            while (currentLoopDate <= endDateObj) {
+                const loopM = currentLoopDate.getMonth();
+                const loopY = currentLoopDate.getFullYear();
+
+                // Filtrar dados para este mês do loop
+                state.finData.forEach(f => {
+                    // Verificar Filtro de Tipo
+                    if (typeFilter !== 'all' && f.tipo !== typeFilter) return;
+
+                    const diff = (loopY - f.anoIn) * 12 + (loopM - f.mesIn);
+                    
+                    // Verifica se transação existe neste mês (recorrente ou parcelada)
+                    const isActive = f.recorrente ? diff >= 0 : diff >= 0 && diff < f.parcelas;
+
+                    if (isActive) {
+                        const val = f.recorrente ? f.valorTotal : (f.valorTotal / f.parcelas);
+                        reportData.push({
+                            dataCompetencia: `${mesesStr[loopM]}/${loopY}`,
+                            descricao: f.desc.replace(/;/g, " "), // Remove ponto e virgula pra não quebrar CSV
+                            tipo: f.tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA',
+                            valor: val.toFixed(2).replace('.', ','), // Formato Brasileiro
+                            status: f.recorrente ? 'Recorrente' : `${diff + 1}/${f.parcelas}`,
+                            rawValor: f.tipo === 'entrada' ? val : -val
+                        });
+                    }
+                });
+
+                // Avança um mês
+                currentLoopDate.setMonth(currentLoopDate.getMonth() + 1);
+            }
+
+            if (reportData.length === 0) return alert("Nenhum dado encontrado neste período.");
+
+            // Ordenar por data
+            // (Opcional, já vem mais ou menos ordenado pelo loop)
+
+            // Gerar CSV
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM para acentos
-            csvContent += "Descrição,Tipo,Valor,Parcela,Recorrente\n";
+            csvContent += "COMPETÊNCIA;DESCRIÇÃO;CATEGORIA;VALOR (R$);STATUS\n";
 
-            filtered.forEach(f => {
-                const diff = (state.currentYear - f.anoIn) * 12 + (state.currentMonth - f.mesIn);
-                const val = f.recorrente ? f.valorTotal : (f.valorTotal / f.parcelas);
-                const parcelaInfo = f.recorrente ? "Recorrente" : `${diff + 1}/${f.parcelas}`;
-                const safeDesc = f.desc.replace(/,/g, " ");
-                csvContent += `${safeDesc},${f.tipo},${val.toFixed(2)},${parcelaInfo},${f.recorrente ? "Sim" : "Não"}\n`;
+            reportData.forEach(row => {
+                csvContent += `${row.dataCompetencia};${row.descricao};${row.tipo};${row.valor};${row.status}\n`;
             });
 
+            // Trigger Download
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `financeiro_${state.currentYear}_${state.currentMonth + 1}.csv`);
+            link.setAttribute("download", `relatorio_visao_os_${startY}_${endY}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            
+            closeExportModal();
+            showToast("Relatório Gerado!");
         }
 
         function changeDay(dir) { const d = new Date(state.selectedDate); d.setDate(d.getDate() + dir); state.selectedDate = d.toISOString().split('T')[0]; renderTasks(); }
